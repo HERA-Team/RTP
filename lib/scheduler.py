@@ -73,8 +73,8 @@ class Action:
             index2 = None
 
         for status_of_neighbor in self.neighbor_status:
-            if status_of_neighbor is None:  # indicates that obs hasn't been entered into DB yet
-                return False
+            if status_of_neighbor in (None, '', 'NEW'):
+                return False # obs not entered in DB or not ready for processing
 
             index_of_neighbor_status = self.wf.workflow_actions.index(status_of_neighbor)
 
