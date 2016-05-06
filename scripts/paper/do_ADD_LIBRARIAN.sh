@@ -1,12 +1,16 @@
 #! /bin/bash
+#
+# example configuration: args = ['onsite', '%s/%s' % (path,basename)]
+#
+# first argument is the "connection" -- used to decide how to connect to librarian
+# second argument is the local file name with path prefix
+#
+# Note that the actual file of interest is present in PWD *without* the
+# path prefix.
+#
+# XXX redundant with the other do_*_LIBRARIAN.sh scripts
 
-# example call from config: args = ['onsite', '%s/%s' % (path,basename)]
-# first argument is the "site" -- used to decide how to connect to librarian
-# second argument is the local file name with path
-jd=$(basename $(dirname $2))
-basename=$(basename $2)
+conn="$1"
+fullpath="$2"
 
-mkdir -p $jd
-cp -r $basename $jd/$basename"_test"
-
-python -m hera_librarian.uploader $1 $jd/$basename"_test"
+exec upload_to_librarian.py $conn $(basename $fullpath) $fullpath
