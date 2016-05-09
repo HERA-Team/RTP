@@ -107,6 +107,7 @@ class File(Base):
     __tablename__ = 'file'
     filenum = Column(Integer, primary_key=True)
     filename = Column(String(200))
+    path_prefix = Column(String(200))
     host = Column(String(100))
     obsnum = Column(String(100), ForeignKey('observation.obsnum'))
     # this next line creates an attribute Observation.files which is the list of all
@@ -339,7 +340,8 @@ class DataBaseInterface(object):
         s.close()
         return FAILED_OBSNUMS
 
-    def add_observation(self, obsnum, date, date_type, pol, filename, host, outputhost='', length=10 / 60. / 24, status='NEW'):
+    def add_observation(self, obsnum, date, date_type, pol, filename, host, outputhost='',
+                        length=10 / 60. / 24, status='NEW', path_prefix=None):
         """
         create a new observation entry.
         returns: obsnum  (see jdpol2obsnum)
@@ -351,14 +353,17 @@ class DataBaseInterface(object):
         s.commit()
         obsnum = OBS.obsnum
         s.close()
-        self.add_file(obsnum, host, filename)
+        self.add_file(obsnum, host, filename, path_prefix=path_prefix)
         return obsnum
 
-    def add_file(self, obsnum, host, filename):
+    def add_file(self, obsnum, host, filename, path_prefix=None):
         """
         Add a file to the database and associate it with an observation.
         """
-        FILE = File(filename=filename, host=host)
+        if path_prefix is not None and not filename.startswith (path_prefix):
+            raise Exception ('if using path_prefix, filename must start with it; got %s, %s' % (path_prefix, filename))
+
+        FILE = File(filename=filename, host=host, path_prefix=(path_prefix or ''))
         # get the observation corresponding to this file
         s = self.Session()
         OBS = s.query(Observation).filter(Observation.obsnum == obsnum).one()
@@ -391,7 +396,8 @@ class DataBaseInterface(object):
         for obs in obslist:
             obsnum = self.add_observation(obs['obsnum'], obs['date'], obs['date_type'], obs['pol'],
                                           obs['filename'], obs['host'], outputhost=obs['outputhost'],
-                                          length=obs['length'], status=obs['status'])
+                                          length=obs['length'], status=obs['status'],
+                                          path_prefix=obs.get('path_prefix'))
 
             neighbors[obsnum] = (obs.get('neighbor_low', None), obs.get('neighbor_high', None))
 
@@ -522,7 +528,7 @@ class DataBaseInterface(object):
         yay = self.update_obs(OBS)
         return yay
 
-    def get_input_file(self, obsnum):
+    def get_input_file(self, obsnum, apply_path_prefix=False):
         """
         input:observation number
         return: host,path (the host and path of the initial data set on the pot)
@@ -532,6 +538,7 @@ class DataBaseInterface(object):
         mypath = ""
         myhost = ""
         myfile = ""
+        path_prefix = ""
         s = self.Session()
         OBS = s.query(Observation).filter(Observation.obsnum == obsnum).one()
         # Jon: Maybe make the like statement a variable in the config file? for now I will cheat for a bit
@@ -550,10 +557,23 @@ class DataBaseInterface(object):
             myhost = POTFILE.host
             mypath = os.path.dirname(POTFILE.filename)
             myfile = os.path.basename(POTFILE.filename)
+            path_prefix = POTFILE.path_prefix
         except:
             pass
         s.close()
-        return myhost, mypath, myfile
+
+        if not apply_path_prefix:
+            return myhost, mypath, myfile
+
+        if not mypath.startswith (path_prefix):
+            raise Exception ('internal consistency failure: filename should start with %s but got %s'
+                             % (path_prefix, mypath))
+
+        if path_prefix == '':
+            return myhost, '', mypath, myfile
+
+        parent_dirs = mypath[len (path_prefix)+1:]
+        return myhost, path_prefix, parent_dirs, myfile
 
     def get_output_location(self, obsnum):
         """

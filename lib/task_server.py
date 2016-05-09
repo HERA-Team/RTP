@@ -277,7 +277,8 @@ class TaskClient:
 
     def gen_args(self, task, obs):
         args = []
-        pot, path, basename = self.dbi.get_input_file(obs)  # Jon: Pot I believe is host where file to process is, basename is just the file name
+        pot, path_prefix, parent_dirs, basename = self.dbi.get_input_file(obs, apply_path_prefix=True)
+        path = os.path.join (path_prefix, parent_dirs)
         outhost, outpath = self.dbi.get_output_location(obs)
 
         #  These varibles are here to be accessible to the arguments variable in the config file
