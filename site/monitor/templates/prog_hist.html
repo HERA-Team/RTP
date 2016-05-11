@@ -1,13 +1,12 @@
 {% block hist %}
-<div id='file_hist'></div>
+<div id='prog_hist'></div>
 <script>
 // Convert the Python lists passed to this template to JSON objects, so they can be used in JavaScript.
-var file_days = {{ file_days | tojson }};
+var file_status = {{ file_status | tojson }};
 var file_counts = {{ file_counts | tojson }};
-var all_counts = {{ all_counts | tojson }};
 
 $(function() {
-    $('#file_hist').highcharts({
+    $('#prog_hist').highcharts({
         chart: {
             type: 'column'
         },
@@ -50,11 +49,11 @@ $(function() {
             },
         },
         title: {
-            text: 'Files Processed'
+            text: 'File Stage Count'
         },
         xAxis: {
             ordinal: false,
-            categories: file_days,
+            categories: file_status,
             crosshair: true,
             labels: {
                 align: 'left'
@@ -62,20 +61,15 @@ $(function() {
         },
         yAxis: {
             title: {
-                text: 'Number of Files (Processed/Total)'
+                text: 'Files in each stage'
             },
             min: 0,
             allowDecimals: false
         },
         series: [{
             type: 'column',
-            name: 'processed files',
+            name: 'Amount of files',
             data: file_counts
-        },
-        {
-            type: 'column',
-            name: 'all_files',
-            data: all_counts
         }]
     });
 }(jQuery));

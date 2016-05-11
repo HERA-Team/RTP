@@ -11,7 +11,6 @@ stream_plot | streaming plot example
 file_hist | creates histogram
 obs_table | shows observation table
 file_table | shows file table
-day_summary_table | shows day summary table
 '''
 from flask import render_template, flash, redirect, url_for, request, g, make_response, Response, jsonify
 from rtp.site.flask_app import monitor_app as app, monitor_db as db
@@ -92,9 +91,39 @@ def file_hist():
                       .group_by(func.substr(file_table.filename, 5, 7))
         all_counts = tuple(count, for count in all_query.all())
 
-    return render_template('data_hist.html',
+    return render_template('file_hist.html',
                             file_days=file_days, file_counts=file_counts,
                             all_counts=all_counts)
+
+@app.route('/prog_hist', methods = ['POST'])
+def prog_hist():
+    '''
+    generate histogram for data
+
+    Returns
+    -------
+    html: histogram
+    '''
+    dbi, obs_table, file_table, log_table = db_objs()
+
+    statuses = ('NEW','UV_POT', 'UV', 'UVC', 'CLEAN_UV', 'UVCR', 'CLEAN_UVC',
+                'ACQUIRE_NEIGHBORS', 'UVCRE', 'NPZ', 'UVCRR', 'NPZ_POT',
+                'CLEAN_UVCRE', 'UVCRRE', 'CLEAN_UVCRR', 'CLEAN_NPZ',
+                'CLEAN_NEIGHBORS', 'UVCRRE_POT', 'CLEAN_UVCRRE', 'CLEAN_UVCR',
+                'COMPLETE')
+
+    with dbi.session_scope() as s:
+        file_query = s.query(file_table, func.count(file_table))\
+                      .join(obs_table)\
+                      .filter(obs_table.status != 'COMPLETE')\
+                      .group_by(obs_table.status)
+        file_query = ((q.status, count) for q, count in file_query.all())
+        file_status, file_counts = zip(*file_query)
+
+        file_status, file_counts = sorted(zip(file_status, file_counts), key=lambda x: statuses.index(x[1]))
+
+    return render_template('prog_hist.html',
+                            file_status=file_status, file_counts=file_counts)
 
 @app.route('/obs_table', methods = ['POST'])
 def obs_table():
@@ -140,19 +169,3 @@ def file_table():
     #need some way to include time subtraction from current stage start time and current time
 
     return render_template('file_table.html', working_FILEs=working_FILEs)
-
-@app.route('/day_summary_table', methods=['POST'])
-def day_summary_table():
-    '''
-    summary of data in main databases
-
-    Returns
-    -------
-    html: day summary table
-    '''
-    dbi, obs_table, file_table, log_table = db_objs()
-
-    with dbi.session_scope() as s:
-        pass
-
-    return render_template('day_summary_table.html')
