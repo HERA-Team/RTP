@@ -12,8 +12,6 @@
     <div id='main_content_div'>
         <tr class='rowClass'>
             <td class='cellClass cellTop'>
-                {% include 'date_controls.html' %}
-                {% include 'limiters.html' %}
                 {#% include 'stream.html' %#}
                 {#% include 'refr_table.html' %#}
                 {% include 'data_hist.html' %}
@@ -26,19 +24,9 @@
                 <br>
             </td>
             <td class='right_cell cellClass cellTop'>
-                <div id='data_summary_table'></div>
-                <div><br></div>
                 <div id='day_summary_table'></div>
             </td>
         </tr>
     </div>
 </table>
-<script>
-    function downloadObs() {
-        window.open('/save_obs?polarization={{ polarization }}&era_type={{ era_type }}&start_utc={{ start_utc }}&end_utc={{ end_utc }}', '_blank');
-    }
-    function downloadFiles() {
-        window.open('/save_files?host={{ host }}&filetype={{ filetype }}&polarization={{ polarization }}&era_type={{ era_type }}&start_utc={{ start_utc }}&end_utc={{ end_utc }}', '_blank');
-    }
-</script>
 {% endblock %}
