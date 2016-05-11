@@ -5,6 +5,7 @@ import logging
 import psutil
 import datetime
 import numpy as np
+from contextlib import contextmanager
 
 # from subprocess import Popen, PIPE
 
@@ -177,6 +178,26 @@ class DataBaseInterface(object):
         except:
             logger.exception("Could not create database binding, please check database settings")
             sys.exit(1)
+
+    @contextmanager
+    def session_scope(self):
+        '''
+        creates a session scope
+        can use 'with'
+
+        Returns
+        -------
+        object: session scope to be used to access database with 'with'
+        '''
+        session = self.Session()
+        try:
+            yield session
+            session.commit()
+        except:
+            session.rollback()
+            raise
+        finally:
+            session.close()
 
     def test_db(self):
         tables = Base.metadata.tables.keys()
