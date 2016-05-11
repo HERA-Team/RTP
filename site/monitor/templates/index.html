@@ -7,24 +7,21 @@
 <script src='http://code.highcharts.com/stock/highstock.js'></script>
 <script src='http://code.highcharts.com/stock/highcharts-more.js'></script>
 <script src='http://code.highcharts.com/modules/no-data-to-display.js'></script>
-<script src='../static/js/index.js'></script>
+<!--script src='../static/js/index.js'></script-->
 <table style='width:100%' class='tableClass'>
     <div id='main_content_div'>
         <tr class='rowClass'>
             <td class='cellClass cellTop'>
                 {#% include 'stream.html' %#}
                 {#% include 'refr_table.html' %#}
-                {% include 'data_hist.html' %}
+                {#% include 'data_hist.html' %#}
                 <div class='container'>
                     <div class='floatLeft' id='obs_table'></div>
                     <div id='file_table'></div>
                 </div>
-                <button type='button' onclick='downloadObs()' class='replyButtonL' style='margin-top:12px;'>Save Observations</button>
-                <button type='button' onclick='downloadFiles()' class='replyButtonR' style='margin-top:12px;'>Save Files</button>
-                <br>
             </td>
             <td class='right_cell cellClass cellTop'>
-                <div id='day_summary_table'></div>
+                <!--div id='day_summary_table'></div-->
             </td>
         </tr>
     </div>

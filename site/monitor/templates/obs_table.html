@@ -1,21 +1,50 @@
 {% block content %}
 <table class='table table-striped table-bordered table-responsive' style='margin:0;'>
     <tr>
-        <th colspan='4'>Observation log for {{ start_time }} - {{ end_time }} | Pol: {{ polarization }} | Era Type: {{ era_type }}</th>
+        <th colspan='4'>Failed Observations</th>
     </tr>
     <tr>
         <th style='width:30%'>Julian Date</th>
-        <th style='width:30%'>Obsnum</th>
         <th style='width:10%'>Polarization</th>
-        <th style='width:30%'>Length</th>
+        <th style='width:20%'>Obsnum</th>
+        <th style='width:20%'>Current Completed Stage</th>
+        <th style='width:10%'>Time of last attempt</th>
+        <th style='width:10%'>Status of last attempt</th>
     </tr>
     <tbody>
-        {% for obs in log_list %}
+        {% for obs in failed_obs %}
         <tr>
-            <td>{{ obs['julian_date'] }}</td>
-            <td>{{ obs['obsnum'] }}</td>
-            <td>{{ obs['polarization'] }}</td>
-            <td>{{ obs['length'] }}</td>
+            <td>{{ obs.date }}</td>
+            <td>{{ obs.pol }}</td>
+            <td>{{ obs.obsnum }}</td>
+            <td>{{ obs.status }}</td>
+            <td>{{ obs.current_stage_start_time }}</td>
+            <td>{{ obs.current_stage_in_progress }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+<table class='table table-striped table-bordered table-responsive' style='margin:0;'>
+    <tr>
+        <th colspan='4'>Killed Observations</th>
+    </tr>
+    <tr>
+        <th style='width:30%'>Julian Date</th>
+        <th style='width:10%'>Polarization</th>
+        <th style='width:20%'>Obsnum</th>
+        <th style='width:20%'>Current Completed Stage</th>
+        <th style='width:10%'>Time of last attempt</th>
+        <th style='width:10%'>Status of last attempt</th>
+    </tr>
+    <tbody>
+        {% for obs in killed_obs %}
+        <tr>
+            <td>{{ obs.date }}</td>
+            <td>{{ obs.pol }}</td>
+            <td>{{ obs.obsnum }}</td>
+            <td>{{ obs.status }}</td>
+            <td>{{ obs.current_stage_start_time }}</td>
+            <td>{{ obs.current_stage_in_progress }}</td>
         </tr>
         {% endfor %}
     </tbody>
