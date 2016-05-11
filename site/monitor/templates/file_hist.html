@@ -1,14 +1,13 @@
 {% block hist %}
-<div id='obs_hist'></div>
+<div id='file_hist'></div>
 <script>
 // Convert the Python lists passed to this template to JSON objects, so they can be used in JavaScript.
-var f_days = {{ f_days | tojson }};
-var j_days = {{ j_days | tojson }};
-var f_day_counts = {{ f_day_counts | tojson }};
-var j_day_counts = {{ j_day_counts | tojson }};
+var file_days = {{ file_days | tojson }};
+var file_counts = {{ file_counts | tojson }};
+var all_counts = {{ all_counts | tojson }};
 
 $(function() {
-    $('#obs_hist').highcharts({
+    $('#file_hist').highcharts({
         chart: {
             type: 'column'
         },
@@ -55,7 +54,7 @@ $(function() {
         },
         xAxis: {
             ordinal: false,
-            categories: j_days,
+            categories: file_days,
             crosshair: true,
             labels: {
                 align: 'left'
@@ -63,20 +62,20 @@ $(function() {
         },
         yAxis: {
             title: {
-                text: 'Number of Observations/Files'
+                text: 'Number of Files (Processed/Total)'
             },
             min: 0,
             allowDecimals: false
         },
         series: [{
             type: 'column',
-            name: 'observations',
-            data: j_day_counts
+            name: 'processed files',
+            data: file_counts
         },
         {
             type: 'column',
-            name: 'files',
-            data: f_day_counts
+            name: 'all_files',
+            data: all_counts
         }]
     });
 }(jQuery));

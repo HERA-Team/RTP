@@ -8,7 +8,7 @@ Functions
 db_objs | gathers database objects for use
 index | shows main page
 stream_plot | streaming plot example
-data_hist | creates histogram
+file_hist | creates histogram
 obs_table | shows observation table
 file_table | shows file table
 day_summary_table | shows day summary table
@@ -70,8 +70,8 @@ def stream_plot():
 
     return jsonify({'count': file_count})
 
-@app.route('/data_hist', methods = ['POST'])
-def data_hist():
+@app.route('/file_hist', methods = ['POST'])
+def file_hist():
     '''
     generate histogram for data
 
@@ -82,9 +82,19 @@ def data_hist():
     dbi, obs_table, file_table, log_table = db_objs()
 
     with dbi.session_scope() as s:
-        pass
+        file_query = s.query(file_table, func.count(file_table))\
+                      .join(obs_table)\
+                      .filter(obs_table.status != 'COMPLETE')\
+                      .group_by(func.substr(file_table.filename, 5, 7))
+        file_query = ((q.filename.split('.')[1], count) for q, count in file_query.all())
+        file_days, file_counts = zip(*file_query)
+        all_query = s.query(file_table, func.count(file_table))\
+                      .group_by(func.substr(file_table.filename, 5, 7))
+        all_counts = tuple(count, for count in all_query.all())
 
-    return render_template('data_hist.html')
+    return render_template('data_hist.html',
+                            file_days=file_days, file_counts=file_counts,
+                            all_counts=all_counts)
 
 @app.route('/obs_table', methods = ['POST'])
 def obs_table():
@@ -127,7 +137,7 @@ def file_table():
                       .filter(obs_table.current_pid > 0)\
                       .order_by(obs_table.current_stage_start_time)
         working_FILEs = file_query.all()
-
+    #need some way to include time subtraction from current stage start time and current time
 
     return render_template('file_table.html', working_FILEs=working_FILEs)
 
