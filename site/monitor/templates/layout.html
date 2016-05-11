@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>PaperSearch</title>
+    <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.3/themes/smoothness/jquery-ui.css"/>
+    <link rel="stylesheet" href="../static/css/jquery.datetimepicker.css"/>
+    <link rel="stylesheet" href="../static/css/style.css"/>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.0/css/bootstrap.min.css"/>
+</head>
+<body style='display: inline-block;'>
+    <div class='page'>
+        <div class='metanav'>
+            <span class='nav_left'>
+                <a href="{{ url_for('index') }}">PaperSearch</a>
+            </span>
+            <span class='nav_right'>
+                <a href="{{ url_for('index') }}">home</a>
+            </span>
+        </div>
+        {% block body %}{% endblock %}
+    </div>
+</body>
+</html>

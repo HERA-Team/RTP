@@ -1,0 +1,107 @@
+{% block test %}
+<div id="container" style="height: 400px; min-width: 310px"></div>
+<script>
+function abortRequestIfPending(request) {
+    if (request) {
+        request.abort();
+        return null;
+    }
+    return request;
+};
+
+function getStream(jd_start, jd_end, polarization, newFunc, series) {
+    window.streamPlotRequest = abortRequestIfPending(window.streamPlotRequest);
+    var test;
+
+    window.streamPlotRequest = $.ajax({
+        type: 'POST',
+        url: '/stream_plot',
+        data: {
+            'jd_start': jd_start,
+            'jd_end': jd_end,
+            'polarization': polarization,
+        },
+        success: function(response) {
+            test = response['count'];
+            newFunc(test, series);
+        },
+    });
+};
+</script>
+<script>
+$(function () {
+    window.streamPlotRequest = null;
+    jd_start = 2455903;
+    jd_end = 2455904;
+    polarization = 'all';
+
+    function newPoint(y, series) {
+        // set up the updating of the chart each second
+        var x = (new Date()).getTime(); // current time
+        y = parseInt(y);
+        series.addPoint([x, y], true, true);
+    }
+
+    Highcharts.setOptions({
+        global : {
+            useUTC : false
+        }
+    });
+
+    // Create the chart
+    $('#container').highcharts('StockChart', {
+        chart : {
+            events : {
+                load : function() {
+                    var series = this.series[0];
+                    setInterval(function () {
+                        getStream(jd_start, jd_end, polarization, newPoint, series);
+                    }, 60000);
+                }
+            }
+        },
+
+        rangeSelector: {
+            buttons: [{
+                count: 1,
+                type: 'minute',
+                text: '1M'
+            }, {
+                count: 5,
+                type: 'minute',
+                text: '5M'
+            }, {
+                type: 'all',
+                text: 'All'
+            }],
+            inputEnabled: false,
+            selected: 0
+        },
+
+        title : {
+            text : 'Live random data'
+        },
+
+        exporting: {
+            enabled: false
+        },
+
+        series : [{
+            name : 'Random data',
+            data : (function () {
+                // generate an array of random data
+                var data = [], time = (new Date()).getTime(), i;
+
+                for (i = -999; i <= 0; i += 1) {
+                    data.push([
+                        time + i * 1000,
+                        Math.round(Math.random() * 100)
+                    ]);
+                }
+                return data;
+            }())
+        }]
+    });
+}(jQuery));
+</script>
+{% endblock test %}

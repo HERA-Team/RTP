@@ -1,0 +1,17 @@
+<div>
+    <input type='radio' onclick='setButton()' name='date' value='0'> Date
+    <span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;start:</span>
+    <input type='text' id='datepicker_start' autocomplete='off'/>
+    <span>end:</span>
+    <input type='text' id='datepicker_end' autocomplete='off'/>
+    <button onclick='getObservations(true)' name='dateButton'>Get observations</button>
+    <span id='view_status_span'> You are viewing a date range </span>
+</div>
+<div>
+    <input type='radio' onclick='setButton()' name='date' value='1' checked> Julian Date
+    <span>&nbsp;&nbsp;start:</span>
+    <input type='text' id='jd_start'>
+    <span>end:</span>
+    <input type='text' id='jd_end'>
+    <button onclick='getObservations(true)' name='jDateButton'>Get observations</button>
+</div>

@@ -1,0 +1,13 @@
+build
+dist
+output
+flask
+*pyc
+.*.swp
+.*.swo
+*.cfg
+*.ini
+eorlive
+*.egg-info
+ex.py
+settings.py
