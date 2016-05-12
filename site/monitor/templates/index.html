@@ -7,7 +7,7 @@
 <script src='http://code.highcharts.com/stock/highstock.js'></script>
 <script src='http://code.highcharts.com/stock/highcharts-more.js'></script>
 <script src='http://code.highcharts.com/modules/no-data-to-display.js'></script>
-<!--script src='../static/js/index.js'></script-->
+<script src='../static/js/index.js'></script>
 <table style='width:100%' class='tableClass'>
     <div id='main_content_div'>
         <tr class='rowClass'>
@@ -16,13 +16,12 @@
                 {#% include 'refr_table.html' %#}
                 {#% include 'file_hist.html' %#}
                 {#% include 'prog_hist.html' %#}
+                <div id='file_hist'></div>
+                <div id='prog_hist'></div>
                 <div class='container'>
                     <div class='floatLeft' id='obs_table'></div>
                     <div id='file_table'></div>
                 </div>
-            </td>
-            <td class='right_cell cellClass cellTop'>
-                <!--div id='day_summary_table'></div-->
             </td>
         </tr>
     </div>

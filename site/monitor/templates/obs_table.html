@@ -14,12 +14,12 @@
     <tbody>
         {% for obs in failed_obs %}
         <tr>
-            <td>{{ obs.date }}</td>
-            <td>{{ obs.pol }}</td>
-            <td>{{ obs.obsnum }}</td>
-            <td>{{ obs.status }}</td>
-            <td>{{ obs.current_stage_start_time }}</td>
-            <td>{{ obs.current_stage_in_progress }}</td>
+            <td>{{ obs['date'] }}</td>
+            <td>{{ obs['pol'] }}</td>
+            <td>{{ obs['obsnum'] }}</td>
+            <td>{{ obs['status'] }}</td>
+            <td>{{ obs['current_stage_start_time'] }}</td>
+            <td>{{ obs['current_stage_in_progress'] }}</td>
         </tr>
         {% endfor %}
     </tbody>
@@ -39,12 +39,12 @@
     <tbody>
         {% for obs in killed_obs %}
         <tr>
-            <td>{{ obs.date }}</td>
-            <td>{{ obs.pol }}</td>
-            <td>{{ obs.obsnum }}</td>
-            <td>{{ obs.status }}</td>
-            <td>{{ obs.current_stage_start_time }}</td>
-            <td>{{ obs.current_stage_in_progress }}</td>
+            <td>{{ obs['date'] }}</td>
+            <td>{{ obs['pol'] }}</td>
+            <td>{{ obs['obsnum'] }}</td>
+            <td>{{ obs['status'] }}</td>
+            <td>{{ obs['current_stage_start_time'] }}</td>
+            <td>{{ obs['current_stage_in_progress'] }}</td>
         </tr>
         {% endfor %}
     </tbody>

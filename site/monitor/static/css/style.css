@@ -22,7 +22,7 @@
 	text-align: center;
 }
 
-#obs_hist, #data_hist {
+#obs_hist, #prog_hist {
     width: 100%;
     height: 400px;
     margin: 0;

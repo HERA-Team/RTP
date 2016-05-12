@@ -15,7 +15,7 @@ file_table | shows file table
 import datetime
 from flask import render_template, flash, redirect, url_for, request, g, make_response, Response, jsonify
 from rtp.site.flask_app import monitor_app as app, monitor_db as db
-import dbi as rdbi
+from rtp.site.monitor import dbi as rdbi
 from sqlalchemy import func
 
 def db_objs():
@@ -32,7 +32,7 @@ def db_objs():
     '''
     dbi = rdbi.DataBaseInterface()
     obs_table = rdbi.Observation
-    file_table, log_table = rdbi.File
+    file_table = rdbi.File
     log_table = rdbi.Log
 
     return dbi, obs_table, file_table, log_table
@@ -48,10 +48,10 @@ def index():
     -------
     html: index
     '''
-    dbi, obs_table, file_table, log_table = db_objs()
+    #dbi, obs_table, file_table, log_table = db_objs()
 
-    with dbi.session_scope() as s:
-        pass
+    #with dbi.session_scope() as s:
+    #    pass
 
     return render_template('index.html')
 
@@ -90,7 +90,8 @@ def file_hist():
         file_days, file_counts = zip(*file_query)
         all_query = s.query(file_table, func.count(file_table))\
                       .group_by(func.substr(file_table.filename, 5, 7))
-        all_counts = tuple(count, for count in all_query.all())
+        all_query = ((q, count) for q, count in all_query.all())
+        all_days, all_counts = zip(*all_query)
 
     return render_template('file_hist.html',
                             file_days=file_days, file_counts=file_counts,
@@ -118,10 +119,10 @@ def prog_hist():
                       .join(obs_table)\
                       .filter(obs_table.status != 'COMPLETE')\
                       .group_by(obs_table.status)
-        file_query = ((q.status, count) for q, count in file_query.all())
+        file_query = ((q.observation.status, count) for q, count in file_query.all())
         file_status, file_counts = zip(*file_query)
 
-        file_status, file_counts = sorted(zip(file_status, file_counts), key=lambda x: statuses.index(x[1]))
+        file_status, file_counts = zip(*sorted(zip(file_status, file_counts), key=lambda x: statuses.index(x[0])))
 
     return render_template('prog_hist.html',
                             file_status=file_status, file_counts=file_counts)
@@ -146,6 +147,9 @@ def obs_table():
                       .order_by(obs_table.current_stage_start_time)\
                       .all()
 
+        failed_obs = [fo.to_dict() for fo in failed_obs]
+        killed_obs = [ko.to_dict() for ko in killed_obs]
+
     return render_template('obs_table.html', failed_obs=failed_obs, killed_obs=killed_obs)
 
 @app.route('/file_table', methods = ['GET', 'POST'])
@@ -159,14 +163,18 @@ def file_table():
     '''
     dbi, obs_table, file_table, log_table = db_objs()
     with dbi.session_scope() as s:
+        #              .filter(obs_table.current_stage_in_progress != 'FAILED')\
+        #              .filter(obs_table.current_stage_in_progress != 'KILLED')\
         file_query = s.query(file_table).join(obs_table)\
                       .filter((obs_table.current_stage_in_progress != 'FAILED') | (obs_table.current_stage_in_progress.is_(None)))\
                       .filter((obs_table.current_stage_in_progress != 'KILLED') | (obs_table.current_stage_in_progress.is_(None)))\
                       .filter(obs_table.status != 'NEW')\
                       .filter(obs_table.status != 'COMPLETE')\
-                      .filter(obs_table.current_pid > 0)\
+                      .filter(obs_table.currentpid > 0)\
                       .order_by(obs_table.current_stage_start_time)
         working_FILEs = file_query.all()
+
+        working_FILEs = [(wf.to_dict(), wf.observation.current_stage_start_time) for wf in working_FILEs]
     #need some way to include time subtraction from current stage start time and current time
     utc = datetime.datetime.now()
 

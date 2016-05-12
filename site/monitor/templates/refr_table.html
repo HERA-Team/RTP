@@ -14,7 +14,7 @@ function launchHists() {
 
     window.fileHistRequest = $.ajax({
         type: 'POST',
-        url: '/file_host',
+        url: '/file_hist',
         data: {
         },
         success: function(data) {
@@ -25,7 +25,7 @@ function launchHists() {
 
     window.progHistRequest = $.ajax({
         type: 'POST',
-        url: '/prog_host',
+        url: '/prog_hist',
         data: {
         },
         success: function(data) {
