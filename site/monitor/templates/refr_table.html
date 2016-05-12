@@ -1,9 +1,47 @@
 {% block refr %}
 <script>
+function abortRequestIfPending(request) {
+    if (request) {
+        request.abort();
+        return null;
+    }
+    return request;
+};
+
+function launchHists() {
+    window.fileHistRequest = abortRequestIfPending(window.fileHistRequest);
+    window.progHistRequest = abortRequestIfPending(window.progHistRequest);
+
+    window.fileHistRequest = $.ajax({
+        type: 'POST',
+        url: '/file_host',
+        data: {
+        },
+        success: function(data) {
+            $('#file_hist').html(data);
+        },
+        dataType: 'html'
+    });
+
+    window.progHistRequest = $.ajax({
+        type: 'POST',
+        url: '/prog_host',
+        data: {
+        },
+        success: function(data) {
+            $('#prog_hist').html(data);
+        },
+        dataType: 'html'
+    });
+};
+</script>
+<script>
 $(function () {
+    window.fileHistRequest = null;
+    window.progHistRequest = null;
     setInterval(function () {
-        getObservations(false);
-    }, 6000);
+        launchHists();
+    }, 15000);
 }(jQuery));
 </script>
 {% endblock refr %}
