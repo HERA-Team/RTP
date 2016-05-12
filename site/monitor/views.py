@@ -12,6 +12,7 @@ file_hist | creates histogram
 obs_table | shows observation table
 file_table | shows file table
 '''
+import datetime
 from flask import render_template, flash, redirect, url_for, request, g, make_response, Response, jsonify
 from rtp.site.flask_app import monitor_app as app, monitor_db as db
 import dbi as rdbi
@@ -167,5 +168,6 @@ def file_table():
                       .order_by(obs_table.current_stage_start_time)
         working_FILEs = file_query.all()
     #need some way to include time subtraction from current stage start time and current time
+    utc = datetime.datetime.now()
 
-    return render_template('file_table.html', working_FILEs=working_FILEs)
+    return render_template('file_table.html', working_FILEs=working_FILEs, utc=utc)

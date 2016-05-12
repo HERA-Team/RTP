@@ -7,8 +7,8 @@
         <th style='width:30%'>Filename</th>
         <th style='width:30%'>Status</th>
         <th style='width:20%'>Host</th>
-        <th style='width:20%'>Obsnum</th>
-        <!--th style='width:10%'>Amount of time since stage start</th-->
+        <th style='width:10%'>Obsnum</th>
+        <th style='width:10%'>Amount of time since stage start</th>
     </tr>
     <tbody>
         {% for file in working_FILEs %}
@@ -17,7 +17,7 @@
             <td>{{ file.status }}</td>
             <td>{{ file.host }}</td>
             <td>{{ file.obsnum }}</td>
-            <!--td>{{ file.current_stage_start_time }}</td-->
+            <!--td>{{ (utc - file.current_stage_start_time).total_seconds | int }}</td-->
         </tr>
         {% endfor %}
     </tbody>
