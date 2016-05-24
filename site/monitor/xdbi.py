@@ -13,14 +13,11 @@ import logging
 from sqlalchemy import Table, Column, String, Integer, ForeignKey, Float, func, Boolean, DateTime, Enum, BigInteger, Numeric, Text
 from sqlalchemy import event, DDL
 from sqlalchemy.orm import relationship, backref
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy import create_engine
-import paper as ppdata
+from sqlalchemy.ext.declarative import declarative_base
 try:
     import configparser
 except:
     import ConfigParser as configparser
-from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
 
