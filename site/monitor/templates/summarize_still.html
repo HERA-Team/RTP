@@ -7,21 +7,18 @@
 <script src='http://code.highcharts.com/stock/highstock.js'></script>
 <script src='http://code.highcharts.com/stock/highcharts-more.js'></script>
 <script src='http://code.highcharts.com/modules/no-data-to-display.js'></script>
-<script src='../static/js/index.js'></script>
+<!--script src='../static/js/summarize.js'></script-->
 <table style='width:100%' class='tableClass'>
     <div id='main_content_div'>
         <tr class='rowClass'>
             <td class='cellClass cellTop'>
-                {#% include 'stream.html' %#}
+                <th>{{ good_obscount }} Observations processed in the past day</th>
                 {#% include 'refr_table.html' %#}
-                {#% include 'obs_hist.html' %#}
-                {#% include 'prog_hist.html' %#}
-                <div id='obs_hist' class='floatLeft'></div>
-                <div id='prog_hist' class='floatLeft'></div>
-                <div class='container'>
-                    <div class='floatLeft' id='obs_table'></div>
-                    <div id='file_table'></div>
-                </div>
+                {% include 'full_summary.html' %}
+                {% include 'night_hist.html' %}
+                {% include 'failed_hist.html' %}
+                {% include 'failed_table.html' %}
+                {% include 'completeness.html' %}
             </td>
         </tr>
     </div>

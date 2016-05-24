@@ -1,0 +1,21 @@
+{% block content %}
+<table id='failed_table' class='table table-striped table-bordered table-responsive floatLeft'>
+    <tr>
+        <th colspan='3'>Failed Observations</th>
+    </tr>
+    <tr>
+        <th style='width:30%'>Obsnum</th>
+        <th style='width:40%'>Status</th>
+        <th style='width:30%'>Still host</th>
+    </tr>
+    <tbody>
+        {% for obsnum, status, still in f_obs %}
+        <tr>
+            <td>{{ obsnum }}</td>
+            <td>{{ status }}</td>
+            <td>{{ still }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
