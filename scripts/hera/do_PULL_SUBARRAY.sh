@@ -1,3 +1,2 @@
 #! /bin/bash
-
-#carina's script
+pull_subarrays.sh $1
