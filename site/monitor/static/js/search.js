@@ -11,8 +11,8 @@ $(function() {
     //global ajax vars
     window.dataSummaryTableRequest = null;
     window.daySummaryTableRequest = null;
-    window.obsTableRequest = null;
-    window.fileTableRequest = null;
+    window.searchObsRequest = null;
+    window.searchFileRequest = null;
 
     getObservations(false);
 });
@@ -138,11 +138,11 @@ function getDataHist(startUTC, endUTC, jd_start, jd_end, polarization, era_type,
 };
 
 function getObsTable(startUTC, endUTC, jd_start, jd_end, polarization, era_type) {
-    window.obsTableRequest = abortRequestIfPending(window.obsTableRequest);
+    window.searchObsRequest = abortRequestIfPending(window.searchObsRequest);
 
-    window.obsTableRequest = $.ajax({
+    window.searchObsRequest = $.ajax({
         type: 'POST',
-        url: '/obs_table',
+        url: '/search_obs',
         data: {
             'starttime': startUTC,
             'endtime': endUTC,
@@ -152,18 +152,18 @@ function getObsTable(startUTC, endUTC, jd_start, jd_end, polarization, era_type)
             'era_type': era_type,
         },
         success: function(data) {
-            $('#obs_table').html(data);
+            $('#search_obs').html(data);
         },
         dataType: 'html'
     });
 };
 
 function getFileTable(startUTC, endUTC, jd_start, jd_end, host, filetype, polarization, era_type) {
-    window.fileTableRequest = abortRequestIfPending(window.fileTableRequest);
+    window.searchFileRequest = abortRequestIfPending(window.searchFileRequest);
 
-    window.fileTableRequest = $.ajax({
+    window.searchFileRequest = $.ajax({
         type: 'POST',
-        url: '/file_table',
+        url: '/search_file',
         data: {
             'starttime': startUTC,
             'endtime': endUTC,
@@ -175,7 +175,7 @@ function getFileTable(startUTC, endUTC, jd_start, jd_end, host, filetype, polari
             'era_type': era_type,
         },
         success: function(data) {
-            $('#file_table').html(data);
+            $('#search_file').html(data);
         },
         dataType: 'html'
     });
@@ -281,8 +281,8 @@ function parseQuery() {
 function getObservations(loadTab) {
     window.saveTableRequest = abortRequestIfPending(window.saveTableRequest);
 
-    $('#obs_table').html('<img src="/static/images/ajax-loader.gif" class="loading"/>');
-    $('#file_table').html('<img src="/static/images/ajax-loader.gif" class="loading"/>');
+    $('#search_obs').html('<img src="/static/images/ajax-loader.gif" class="loading"/>');
+    $('#search_file').html('<img src="/static/images/ajax-loader.gif" class="loading"/>');
     $('#data_summary_table').html('<img src="/static/images/ajax-loader.gif" class="loading"/>');
     $('#day_summary_table').html('<img src="/static/images/ajax-loader.gif" class="loading"/>');
 
@@ -298,7 +298,8 @@ function getObservations(loadTab) {
     var host = query.host;
     var filetype = query.filetype;
 
-    var fullLink = '/?starttime=' + startUTC +
+    var fullLink = '/search' +
+                   '?starttime=' + startUTC +
                    '&endtime=' + endUTC +
                    '&jd_start=' + jd_start +
                    '&jd_end=' + jd_end +
@@ -310,7 +311,7 @@ function getObservations(loadTab) {
     if (loadTab) {
         window.saveTableRequest = $.ajax({
             type: 'POST',
-            url: '/',
+            url: '/search',
             data: {
                 'starttime': startUTC,
                 'endtime': endUTC,

@@ -7,7 +7,6 @@ Functions
 ---------
 db_objs | gathers database objects for use
 index | shows main page
-stream_plot | streaming plot example
 obs_hist | creates histogram
 obs_table | shows observation table
 file_table | shows file table
@@ -76,21 +75,6 @@ def index():
     #    pass
 
     return render_template('index.html')
-
-@app.route('/stream_plot', methods = ['GET', 'POST'])
-def stream_plot():
-    '''
-    generate streaming data
-
-    Returns
-    -------
-    '''
-    dbi, obs_table, file_table, log_table = db_objs()
-
-    with dbi.session_scope() as s:
-        pass
-
-    return jsonify({'count': file_count})
 
 @app.route('/obs_hist', methods = ['POST'])
 def obs_hist():
@@ -425,10 +409,10 @@ def page_args():
     starttime = request.args.get('starttime', None)
     endtime = request.args.get('endtime', None)
 
-    pol = request.args.get('polarization', 'all')
+    pol = request.args.get('polarization', 'any')
     era_type = request.args.get('era_type', 'None')
-    host = request.args.get('host', 'folio')
-    filetype = request.args.get('filetype', 'uv')
+    host = request.args.get('host', 'all')
+    filetype = request.args.get('filetype', 'all')
 
     start_utc, end_utc = time_fix(jdstart, jdend, starttime, endtime)
 
@@ -453,10 +437,10 @@ def page_form():
     starttime = request.form.get('starttime', None)
     endtime = request.form.get('endtime', None)
 
-    pol = request.form.get('polarization', 'all')
+    pol = request.form.get('polarization', 'any')
     era_type = request.form.get('era_type', 'None')
-    host = request.form.get('host', 'folio')
-    filetype = request.form.get('filetype', 'uv')
+    host = request.form.get('host', 'all')
+    filetype = request.form.get('filetype', 'all')
 
     start_utc, end_utc = time_fix(jdstart, jdend, starttime, endtime)
 
@@ -526,7 +510,7 @@ def search():
 
     start_utc, end_utc, pol, era_type, host, filetype = page_args()
 
-    dbi, obs_table, file_table = db_objs()
+    dbi, obs_table, file_table, log_table = db_objs()
 
     with dbi.session_scope() as s:
         days = list(range(int(start_utc), int(end_utc) + 1))
@@ -589,7 +573,7 @@ def stream_plot():
     '''
     start_utc, end_utc, pol, era_type, host, filetype = page_form()
 
-    dbi, obs_table, file_table = db_objs()
+    dbi, obs_table, file_table, log_table = db_objs()
 
     with dbi.session_scope() as s:
         file_query = s.query(file_table, func.count(file_table))\
@@ -618,7 +602,7 @@ def data_hist():
     '''
     start_utc, end_utc, pol, era_type, host, filetype = page_form()
 
-    dbi, obs_table, file_table = db_objs()
+    dbi, obs_table, file_table, log_table = db_objs()
 
     with dbi.session_scope() as s:
         days = list(range(int(start_utc), int(end_utc) + 1))
@@ -662,7 +646,7 @@ def data_hist():
                             f_days=f_days, f_day_counts=f_day_counts,
                             j_days=j_days, j_day_counts=j_day_counts)
 
-@app.route('/obs_table', methods = ['POST'])
+@app.route('/search_obs', methods = ['POST'])
 def search_obs():
     '''
     generate observation table for histogram bar
@@ -675,7 +659,7 @@ def search_obs():
 
     output_vars = ('obsnum', 'date', 'pol', 'length')
 
-    dbi, obs_table, file_table = db_objs()
+    dbi, obs_table, file_table, log_table = db_objs()
     with dbi.session_scope() as s:
         obs_query = s.query(obs_table)
         obs_query = obs_filter(obs_query, obs_table,
@@ -685,7 +669,7 @@ def search_obs():
 
         log_list = [{var: getattr(obs, var) for var in output_vars} for obs in obs_query]
 
-    return render_template('obs_table.html',
+    return render_template('search_obs.html',
                             log_list=log_list, output_vars=output_vars,
                             start_time=start_utc, end_time=end_utc,
                             pol=pol, era_type=era_type)
@@ -715,7 +699,7 @@ def save_obs():
                     status=200, mimetype='application/json',
                     headers={'Content-Disposition': 'attachment; filename=obs.json'})
 
-@app.route('/file_table', methods = ['GET', 'POST'])
+@app.route('/search_file', methods = ['GET', 'POST'])
 def search_file():
     '''
     generate file table for histogram bar
@@ -728,7 +712,7 @@ def search_file():
 
     output_vars = ('host', 'filename', 'obsnum')
 
-    dbi, obs_table, file_table = db_objs()
+    dbi, obs_table, file_table, log_table = db_objs()
     with dbi.session_scope() as s:
         file_query = s.query(file_table).join(obs_table)
         file_query = obs_filter(file_query, obs_table,
@@ -739,7 +723,7 @@ def search_file():
         log_list = [{var: getattr(rtp_file, var) for var in output_vars}
                     for rtp_file in file_query.order_by(obs_table.date.asc()).all()]
 
-    return render_template('file_table.html',
+    return render_template('search_file.html',
                             log_list=log_list, output_vars=output_vars,
                             start_time=start_utc, end_time=end_utc,
                             host=host, filetype=filetype)
@@ -755,7 +739,7 @@ def save_files():
     '''
     start_utc, end_utc, pol, era_type, host, filetype = page_args()
 
-    dbi, obs_table, file_table = db_objs()
+    dbi, obs_table, file_table, log_table = db_objs()
     with dbi.session_scope() as s:
         file_query = s.query(file_table).join(obs_table)
         file_query = obs_filter(file_query, obs_table,
@@ -786,7 +770,7 @@ def data_summary_table():
     file_map = {host_str: {filetype_str: {'file_count': 0}\
                 for filetype_str in filetype_strs} for host_str in host_strs}
 
-    dbi, obs_table, file_table = db_objs()
+    dbi, obs_table, file_table, log_table = db_objs()
     with dbi.session_scope() as s:
         file_query = s.query(file_table.host,
                              func.substring_index(file_table.filename, '.', -1),
@@ -825,7 +809,7 @@ def day_summary_table():
     '''
     start_utc, end_utc, pol, era_type, host, filetype = page_form()
 
-    dbi, obs_table, file_table = db_objs()
+    dbi, obs_table, file_table, log_table = db_objs()
 
     with dbi.session_scope() as s:
         pol_query = s.query(func.substr(obs_table.date, 1, 7), obs_table.pol, func.count(obs_table))

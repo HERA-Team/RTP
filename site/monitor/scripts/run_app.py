@@ -10,7 +10,7 @@ import sys
 base_dir = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.dirname(base_dir))
 sys.path.append(os.path.dirname(os.path.dirname(base_dir)))
-import views
+import nviews
 from flask_app import monitor_app as app
 
 if __name__ == "__main__":
