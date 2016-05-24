@@ -6,7 +6,8 @@ sys.path.append(os.path.dirname(base_dir))
 rtp_dir = os.path.dirname(os.path.dirname(base_dir))
 lib_dir = os.path.join(rtp_dir, 'lib')
 sys.path.append(lib_dir)
-import dbi
+#import dbi
+import xdbi as dbi
 import decimal
 import logging
 from contextlib import contextmanager
