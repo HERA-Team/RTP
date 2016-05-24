@@ -169,7 +169,7 @@ class DataBaseInterface(object):
                 sys.exit(1)
         elif dbtype == 'mysql':
             try:
-                self.engine = create_engine('mysql://{0}:{1}@{2}:{3}/{4}'.format(dbuser, dbpasswd, dbhost, dbport, dbname), pool_size=20, max_overflow=40, echo=False)
+                self.engine = create_engine('mysql+pymysql://{0}:{1}@{2}:{3}/{4}'.format(dbuser, dbpasswd, dbhost, dbport, dbname), pool_size=20, max_overflow=40, echo=False)
             except:
                 logger.exception("Could not connect to the mysql database.")
                 sys.exit(1)
