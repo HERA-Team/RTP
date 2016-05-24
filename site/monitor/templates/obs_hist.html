@@ -3,6 +3,7 @@
 <script>
 // Convert the Python lists passed to this template to JSON objects, so they can be used in JavaScript.
 var obs_days = {{ obs_days | tojson }};
+var all_days = {{ all_days | tojson }};
 var obs_counts = {{ obs_counts | tojson }};
 var all_counts = {{ all_counts | tojson }};
 
@@ -54,7 +55,8 @@ $(function() {
         },
         xAxis: {
             ordinal: false,
-            categories: obs_days,
+            //categories: obs_days,
+            categories: all_days,
             crosshair: true,
             labels: {
                 align: 'left'

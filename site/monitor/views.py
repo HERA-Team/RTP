@@ -12,6 +12,7 @@ obs_hist | creates histogram
 obs_table | shows observation table
 file_table | shows file table
 '''
+from __future__ import print_function
 import os
 import sys
 base_dir = os.path.dirname(os.path.realpath(__file__))
@@ -93,12 +94,12 @@ def obs_hist():
         obs_days, obs_counts = zip(*obs_query)
         all_query = s.query(obs_table, func.count(obs_table))\
                       .group_by(func.substr(obs_table.date, 1, 7))
-        all_query = ((q, count) for q, count in all_query.all())
+        all_query = ((int(float(q.date)), count) for q, count in all_query.all())
         all_days, all_counts = zip(*all_query)
 
     return render_template('obs_hist.html',
                             obs_days=obs_days, obs_counts=obs_counts,
-                            all_counts=all_counts)
+                            all_days=all_days, all_counts=all_counts)
 
 @app.route('/prog_hist', methods = ['POST'])
 def prog_hist():
