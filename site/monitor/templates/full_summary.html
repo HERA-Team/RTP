@@ -1,0 +1,19 @@
+{% block content %}
+<table id='full_summary' class='table table-striped table-bordered table-responsive'>
+    <tr>
+        <th colspan='3'>Full Summary</th>
+    </tr>
+    <tr>
+        <th style='width:30%'># Progress</th>
+        <th style='width:30%'># Complete</th>
+        <th style='width:40%'># Observations</th>
+    </tr>
+    <tbody>
+        <tr>
+            <td>{{ num_progress }}</td>
+            <td>{{ num_complete }}</td>
+            <td>{{ num_obs }}</td>
+        </tr>
+    </tbody>
+</table>
+{% endblock %}

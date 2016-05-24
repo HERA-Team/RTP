@@ -11,3 +11,4 @@ eorlive
 *.egg-info
 ex.py
 settings.py
+*.log

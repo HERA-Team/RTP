@@ -1,97 +1,29 @@
-'''
-paper
-
-author | Immanuel Washington
-
-Functions
----------
-file_to_jd | pulls julian date from filename
-file_to_pol | pulls polarization from filename
-decimal_default | json fix for decimal types
-json_data | dumps objects into json file
-rsync_copy | pythonic rsync
-ssh_scope | ssh connection
-
-Classes
--------
-DictFix | adds dictionary to sqlalchemy objects
-DataBaseInterface | interface to database through sqlalchemy
-
-Modules
--------
-convert | time conversions
-memory | memory checking
-schema | schema table creation
-
-Subpackages
------------
-calibrate | calibration and conversion uv files into timestream hdf5 files
-data | (main subpackage) adding, updating, moving, and deleting files, observations, and entries in the paperdata database
-dev | dev version of data subpackage, for testing new features
-distiller | access to paperdistiller database and its features
-ganglia | logging of and access to host information
-site | websites built on flask for accessing the paperdata database
-'''
+from __future__ import print_function
 import os
 import sys
+base_dir = os.path.dirname(os.path.realpath(__file__))
+sys.path.append(os.path.dirname(base_dir))
+rtp_dir = os.path.dirname(os.path.dirname(base_dir))
+lib_dir = os.path.join(rtp_dir, 'lib')
+sys.path.append(lib_dir)
+#import dbi
+import xdbi as dbi
 import decimal
-import json
 import logging
-import paramiko
-import re
-import subprocess
 from contextlib import contextmanager
 from sqlalchemy import exc
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
+import datetime
+import logging
 try:
     import configparser
 except:
     import ConfigParser as configparser
 
-def file_to_jd(path):
-    '''
-    pulls julian date from filename using regex
-
-    Parameters
-    ----------
-    path | str: path of file
-
-    Returns
-    -------
-    str: julian date
-
-    >>> file_to_jd('/home/immwa/test_data/zen.2456617.17386.xx.uvcRRE')
-    2456617.17386
-    '''
-    try:
-        jd = round(float(re.findall(r'\d+\.\d+', path)[0]), 5)
-    except:
-        jd = None
-
-    return jd
-
-
-def file_to_pol(path):
-    '''
-    pulls polarization from filename using regex
-
-    Parameters
-    ----------
-    path | str: path of file
-
-    Returns
-    -------
-    str: polarization
-
-    >>> file_to_pol('/home/immwa/test_data/zen.2456617.17386.xx.uvcRRE')
-    'xx'
-    '''
-    pol = re.findall(r'\.(.{2})\.', path)
-    polarization = 'all' if len(pol) == 0 else pol[0]
-
-    return polarization
+logger = logging.getLogger('librarian')
+Base = declarative_base()
 
 def decimal_default(obj):
     '''
@@ -107,72 +39,6 @@ def decimal_default(obj):
     '''
     if isinstance(obj, decimal.Decimal):
         return float(obj)
-
-def json_data(backup_path, dump_objects):
-    '''
-    dumps list of objects into a json file
-
-    Parameters
-    ----------
-    backup_path | str: filename
-    dump_objects | list[object]: database objects query
-    '''
-    with open(backup_path, 'w') as bkup:
-        data = [ser_data.to_dict() for ser_data in dump_objects.all()]
-        json.dump(data, bkup, sort_keys=True, indent=1, default=decimal_default)
-
-def rsync_copy(source, destination):
-    '''
-    uses rsync to copy files and make sure they have not changed by using md5 (c option)
-
-    Parameters
-    ----------
-    source | str: source file path
-    destination | str: destination path
-    '''
-    subprocess.check_output(['rsync', '-ac', source, destination])
-
-    return None
-
-@contextmanager
-def ssh_scope(host, username=None, password=None):
-    '''
-    creates a ssh scope
-    can use 'with'
-    SSH/SFTP connection to remote host
-
-    Parameters
-    ----------
-    host | str: remote host
-    username | str: username --defaults to None
-    password | str: password --defaults to None
-
-    Returns
-    -------
-    object: ssh object to be used to run commands to remote host
-    '''
-    ssh = paramiko.SSHClient()
-    ssh.load_system_host_keys()
-    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    key_filename = os.path.expanduser('~/.ssh/id_rsa')
-    try:
-        ssh.connect(host, username=username, key_filename=key_filename)
-        yield ssh
-    except:
-        try:
-            ssh.connect(host, key_filename=key_filename)
-            yield ssh
-        except:
-            try:
-                ssh.connect(host, username=username, password=password, key_filename=key_filename)
-                yield ssh
-            except:
-                yield None
-    finally:
-        ssh.close()
-
-logger = logging.getLogger('paper')
-Base = declarative_base()
 
 class DictFix(object):
     '''
@@ -197,6 +63,22 @@ class DictFix(object):
         except(exc.InvalidRequestError):
             return None
 
+
+#class Neighbors(dbi.neighbors, DictFix):
+#    pass
+
+class Observation_(dbi.Observation, DictFix):
+    pass
+
+class File_(dbi.File, DictFix):
+    pass
+
+class Log_(dbi.Log, DictFix):
+    pass
+
+class Still_(dbi.Still, DictFix):
+    pass
+
 class DataBaseInterface(object):
     '''
     Database Interface
@@ -213,14 +95,14 @@ class DataBaseInterface(object):
     set_entry | updates database entry field with new value
     set_entry_dict | updates database entry fields with new values using input dict
     '''
-    def __init__(self, configfile='~/paperdata/paperdata.cfg'):
+    def __init__(self, configfile='~/still_shredder.cfg'):
         '''
         Connect to the database and make a session creator
-        superclass of DBI for paperdata, paperdev, and ganglia databases
+        superclass of DBI for databases
 
         Parameters
         ----------
-        configfile | Optional[str]: configuration file --defaults to ~/paperdata.cfg
+        configfile | Optional[str]: configuration file --defaults to ~/still_shredder.cfg
         '''
         if configfile is not None:
             config = configparser.ConfigParser()
@@ -233,16 +115,16 @@ class DataBaseInterface(object):
                 except:
                     self.dbinfo = config['dbinfo']
                 try:
-                    self.dbinfo['password'] = self.dbinfo['password'].decode('string-escape')
+                    self.dbinfo['dbpasswd'] = self.dbinfo['dbpasswd'].decode('string-escape')
                 except:
-                    self.dbinfo['password'] = bytes(self.dbinfo['password'], 'ascii').decode('unicode_escape')
+                    self.dbinfo['dbpasswd'] = bytes(self.dbinfo['dbpasswd'], 'ascii').decode('unicode_escape')
             else:
                 logging.info(' '.join((configfile, 'Not Found')))
         try:
-            connect_string = 'mysql://{username}:{password}@{hostip}:{port}/{dbname}'
+            connect_string = 'mysql://{dbuser}:{dbpasswd}@{dbhost}:{dbport}/{dbname}'
             self.engine = create_engine(connect_string.format(**self.dbinfo), pool_size=20, max_overflow=40)
         except:
-            connect_string = 'mysql+mysqldb://{username}:{password}@{hostip}:{port}/{dbname}'
+            connect_string = 'mysql+mysqldb://{dbuser}:{dbpasswd}@{dbhost}:{dbport}/{dbname}'
             self.engine = create_engine(connect_string.format(**self.dbinfo), pool_size=20, max_overflow=40)
 
         self.Session = sessionmaker(bind=self.engine)

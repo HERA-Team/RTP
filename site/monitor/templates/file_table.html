@@ -1,7 +1,7 @@
 {% block content %}
 <table class='table table-striped table-bordered table-responsive' style='margin:0;'>
     <tr>
-        <th colspan='4'>Processing Files</th>
+        <th colspan='5'>Processing Files</th>
     </tr>
     <tr>
         <th style='width:30%'>Filename</th>
@@ -11,13 +11,13 @@
         <th style='width:10%'>Amount of time since stage start</th>
     </tr>
     <tbody>
-        {% for file, start_time in working_FILEs %}
+        {% for file, stage, run_time in working_FILEs %}
         <tr>
             <td>{{ file['filename'] }}</td>
-            <td>{{ file['current_stage_in_progress'] }}</td>
+            <td>{{ stage }}</td>
             <td>{{ file['host'] }}</td>
             <td>{{ file['obsnum'] }}</td>
-            <td>{{ (utc - start_time).total_seconds | int }}</td>
+            <td>{{ run_time }}</td>
         </tr>
         {% endfor %}
     </tbody>

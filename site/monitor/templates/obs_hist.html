@@ -1,12 +1,14 @@
 {% block hist %}
-<div id='prog_hist' class='floatLeft'></div>
+<div id='obs_hist' class='floatLeft'></div>
 <script>
 // Convert the Python lists passed to this template to JSON objects, so they can be used in JavaScript.
-var file_status = {{ file_status | tojson }};
-var file_counts = {{ file_counts | tojson }};
+var obs_days = {{ obs_days | tojson }};
+var all_days = {{ all_days | tojson }};
+var obs_counts = {{ obs_counts | tojson }};
+var all_counts = {{ all_counts | tojson }};
 
 $(function() {
-    $('#prog_hist').highcharts({
+    $('#obs_hist').highcharts({
         chart: {
             type: 'column'
         },
@@ -27,7 +29,7 @@ $(function() {
             pointFormat: '<tr><td style="color:{series.color};padding:0">{series.name}: </td>' +
                          '<td style="padding:0"><b>{point.y}</b></td></tr>',
             footerFormat: '</table>',
-            shared: true,
+            //shared: true,
             useHTML: true
         },
         credits: {
@@ -49,11 +51,12 @@ $(function() {
             },
         },
         title: {
-            text: 'File Stage Count'
+            text: 'Observations Processed'
         },
         xAxis: {
             ordinal: false,
-            categories: file_status,
+            //categories: obs_days,
+            categories: all_days,
             crosshair: true,
             labels: {
                 align: 'left'
@@ -61,15 +64,20 @@ $(function() {
         },
         yAxis: {
             title: {
-                text: 'Files in each stage'
+                text: 'Number of Observations (Processed/Total)'
             },
             min: 0,
             allowDecimals: false
         },
         series: [{
             type: 'column',
-            name: 'Amount of files',
-            data: file_counts
+            name: 'processed obs',
+            data: obs_counts
+        },
+        {
+            type: 'column',
+            name: 'all obs',
+            data: all_counts
         }]
     });
 }(jQuery));

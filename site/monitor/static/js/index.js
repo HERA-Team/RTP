@@ -1,7 +1,7 @@
 $(function() {
     window.fileTableRequest = null;
     window.obsTableRequest = null;
-    window.fileHistRequest = null;
+    window.obsHistRequest = null;
     window.progHistRequest = null;
 
     $('#obs_table').html('<img src="/static/images/ajax-loader.gif" class="loading"/>');
@@ -22,14 +22,14 @@ function abortRequestIfPending(request) {
 };
 
 function launchHists() {
-    window.fileHistRequest = abortRequestIfPending(window.fileHistRequest);
+    window.obsHistRequest = abortRequestIfPending(window.obsHistRequest);
     window.progHistRequest = abortRequestIfPending(window.progHistRequest);
 
-    window.fileHistRequest = $.ajax({
+    window.obsHistRequest = $.ajax({
         type: 'POST',
-        url: '/file_hist',
+        url: '/obs_hist',
         success: function(data) {
-            $('#file_hist').html(data);
+            $('#obs_hist').html(data);
         },
         dataType: 'html'
     });
