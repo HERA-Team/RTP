@@ -330,7 +330,7 @@ function getObservations(loadTab) {
     } else {
         getObsTable(startUTC, endUTC, jd_start, jd_end, polarization, era_type);
         getFileTable(startUTC, endUTC, jd_start, jd_end, host, filetype, polarization, era_type);
-        //getDataHist(startUTC, endUTC, jd_start, jd_end, polarization, era_type, host, filetype);
+        getDataHist(startUTC, endUTC, jd_start, jd_end, polarization, era_type, host, filetype);
         getDataTable(startUTC, endUTC, jd_start, jd_end);
         getDayTable(startUTC, endUTC, jd_start, jd_end, polarization, era_type);
     }
