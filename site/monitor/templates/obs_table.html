@@ -20,7 +20,7 @@
             <td>{{ obs['status'] }}</td>
             <td>{{ obs['current_stage_start_time'] }}</td>
             <td>
-                <button type='button' onclick='alertLog({{ obs["obsnum"] }})' class='replyButtonR' style='margin-top:12px;'>LOG</button>
+                <button type='button' onclick='alertLog({{ obs["obsnum"] }})' class='replyButtonR' style='margin-top:12px;'>FAIL LOG</button>
             </td>
             <!--td>{{ obs['current_stage_in_progress'] }}</td-->
         </tr>
@@ -47,7 +47,9 @@
             <td>{{ obs['obsnum'] }}</td>
             <td>{{ obs['status'] }}</td>
             <td>{{ obs['current_stage_start_time'] }}</td>
-            <td>{{ obs['current_stage_in_progress'] }}</td>
+            <td>
+                <button type='button' onclick='alertLog({{ obs["obsnum"] }})' class='replyButtonR' style='margin-top:12px;'>KILL LOG</button>
+            </td>
         </tr>
         {% endfor %}
     </tbody>
