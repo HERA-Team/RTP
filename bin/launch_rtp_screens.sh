@@ -1,6 +1,6 @@
 #! /bin/bash
 
-SESSION=RTP2
+SESSION=RTP
 
 # Refuse to run if the named session already exists. I'm not
 # aware of a better way to do this.
@@ -33,6 +33,6 @@ screen -S $SESSION -p "Deployment" -X stuff "source activate HERA$newline"
 screen -S $SESSION -p "Monitoring" -X stuff "source activate HERA$newline"
 
 # The "select" command doesn't seem to work in -X mode so we can't magically
-# switch back to the Client window.
+# switch back to the Client window. Oh well.
 #screen -S $SESSION -X select "RTP Client"
 echo "Services launched on screen session $SESSION; attach with \"screen -r $SESSION\"."
