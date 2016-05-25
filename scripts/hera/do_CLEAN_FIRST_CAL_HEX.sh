@@ -1,4 +1,5 @@
 #! /bin/bash
+set -e
 f=$(basename $1 uvc)
 for ext in HH PH
     do

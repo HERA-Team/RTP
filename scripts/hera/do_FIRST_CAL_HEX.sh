@@ -1,5 +1,5 @@
 #! /bin/bash
-
+set -e
 CALFILE_HH=XXX #hsa7458_v000
 CALFILE_PH=XXX #psa...
 

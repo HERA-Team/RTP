@@ -1,5 +1,5 @@
 #! /bin/bash
-
+set -e
 f=$(basename $2 uvc)
 echo ${f}
 for ext in HH PH PI PP
