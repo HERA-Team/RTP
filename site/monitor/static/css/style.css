@@ -1,4 +1,4 @@
-#error_table, #obs_table, #file_table table {
+#obs_table, #file_table, #search_obs, #search_file table {
 	table-layout: fixed;
 	width: 50%;
 	max-width: 100%;

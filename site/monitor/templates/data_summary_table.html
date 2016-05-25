@@ -1,0 +1,31 @@
+{% block content %}
+<table class='table-bordered table-striped'>
+    <b>All Files summary</b>
+    <thead>
+        <tr>
+            <th>Amount</th>
+                {% for host in host_strs %}
+                    <th>{{ host }}</th>
+                {% endfor %}
+            <th>Total</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for filetype in filetype_strs %}
+            <tr>
+                <th>{{ filetype }}</th>
+                    {% for host in host_strs %}
+                        <td>{{ file_map[host][filetype]['file_count'] }}</td>
+                    {% endfor %}
+                <td>{{ file_total[filetype]['count'] }}</td>
+            </tr>
+        {% endfor %}
+        <tr>
+            <th>Total</th>
+            {% for host in host_strs %}
+                <td>{{ file_total[host]['count'] }}</td>
+            {% endfor %}
+        </tr>
+    </tbody>
+</table>
+{% endblock %}

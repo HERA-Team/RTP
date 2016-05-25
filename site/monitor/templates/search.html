@@ -1,0 +1,44 @@
+{% extends 'layout.html' %}
+{% block body %}
+<script src='https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js'></script>
+<script src='https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.3/jquery-ui.min.js'></script>
+<script src='../static/js/jquery.datetimepicker.js'></script>
+<script src='../static/js/collapsible.min.js'></script>
+<script src='http://code.highcharts.com/stock/highstock.js'></script>
+<script src='http://code.highcharts.com/stock/highcharts-more.js'></script>
+<script src='http://code.highcharts.com/modules/no-data-to-display.js'></script>
+<script src='../static/js/search.js'></script>
+<table style='width:100%' class='tableClass'>
+    <div id='main_content_div'>
+        <tr class='rowClass'>
+            <td class='cellClass cellTop'>
+                {% include 'date_controls.html' %}
+                {% include 'limiters.html' %}
+                {#% include 'stream.html' %#}
+                {#% include 'refr_table.html' %#}
+                {% include 'data_hist.html' %}
+                <div class='container'>
+                    <div class='floatLeft' id='search_obs'></div>
+                    <div id='search_file'></div>
+                </div>
+                <button type='button' onclick='downloadObs()' class='replyButtonL' style='margin-top:12px;'>Save Observations</button>
+                <button type='button' onclick='downloadFiles()' class='replyButtonR' style='margin-top:12px;'>Save Files</button>
+                <br>
+            </td>
+            <td class='right_cell cellClass cellTop'>
+                <div id='data_summary_table'></div>
+                <div><br></div>
+                <div id='day_summary_table'></div>
+            </td>
+        </tr>
+    </div>
+</table>
+<script>
+    function downloadObs() {
+        window.open('/save_obs?polarization={{ polarization }}&era_type={{ era_type }}&start_utc={{ start_utc }}&end_utc={{ end_utc }}', '_blank');
+    }
+    function downloadFiles() {
+        window.open('/save_files?host={{ host }}&filetype={{ filetype }}&polarization={{ polarization }}&era_type={{ era_type }}&start_utc={{ start_utc }}&end_utc={{ end_utc }}', '_blank');
+    }
+</script>
+{% endblock %}

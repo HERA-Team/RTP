@@ -19,7 +19,10 @@
             <td>{{ obs['obsnum'] }}</td>
             <td>{{ obs['status'] }}</td>
             <td>{{ obs['current_stage_start_time'] }}</td>
-            <td>{{ obs['current_stage_in_progress'] }}</td>
+            <td>
+                <button type='button' onclick='alertLog({{ obs["obsnum"] }})' class='replyButtonR' style='margin-top:12px;'>LOG</button>
+            </td>
+            <!--td>{{ obs['current_stage_in_progress'] }}</td-->
         </tr>
         {% endfor %}
     </tbody>
@@ -49,4 +52,32 @@
         {% endfor %}
     </tbody>
 </table>
+<script>
+    function abortRequestIfPending(request) {
+        if (request) {
+            request.abort();
+            return null;
+        }
+        return request;
+    };
+
+    function alertLog(obsnum) {
+        window.alertLogRequest = null;
+        obsnum = String(obsnum);
+        log_url = '/alert_log?obsnum=' + obsnum;
+        (function($, obsnum) {
+            window.alertLogRequest = abortRequestIfPending(window.alertLogRequest);
+
+            window.alertLogRequest = $.ajax({
+                type: 'POST',
+                url: log_url,
+                success: function(data) {
+                    alert(JSON.stringify(data, null, 4));
+                    //window.open(JSON.stringify(data));
+                },
+                dataType: 'json'
+            });
+        }(jQuery));
+    };
+</script>
 {% endblock %}
