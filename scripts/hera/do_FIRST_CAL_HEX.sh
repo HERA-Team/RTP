@@ -1,7 +1,7 @@
 #! /bin/bash
 set -e
-CALFILE_HH=XXX #hsa7458_v000
-CALFILE_PH=XXX #psa...
+CALFILE_HH=hsa7458_v000_HH.py #hsa7458_v000
+CALFILE_PH=hsa7458_v000_PH.py #psa...
 
 f=$(basename $1 uvc)
 bad_ant_file=$1.bad_ants
