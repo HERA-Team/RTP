@@ -53,11 +53,31 @@
     </tbody>
 </table>
 <script>
+    function abortRequestIfPending(request) {
+        if (request) {
+            request.abort();
+            return null;
+        }
+        return request;
+    };
+
     function alertLog(obsnum) {
+        window.alertLogRequest = null;
         obsnum = String(obsnum);
-        log_func = '/alert_log?obsnum=' + obsnum
-        window.open(log_func);
-        //alert(obsnum);
-    }
+        log_url = '/alert_log?obsnum=' + obsnum;
+        (function($, obsnum) {
+            window.alertLogRequest = abortRequestIfPending(window.alertLogRequest);
+
+            window.alertLogRequest = $.ajax({
+                type: 'POST',
+                url: log_url,
+                success: function(data) {
+                    alert(JSON.stringify(data));
+                    //window.open(JSON.stringify(data));
+                },
+                dataType: 'json'
+            });
+        }(jQuery));
+    };
 </script>
 {% endblock %}

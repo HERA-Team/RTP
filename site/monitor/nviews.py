@@ -157,7 +157,7 @@ def obs_table():
 
     return render_template('obs_table.html', failed_obs=failed_obs, killed_obs=killed_obs)
 
-@app.route('/alert_log', methods = ['GET'])
+@app.route('/alert_log', methods = ['GET', 'POST'])
 def alert_log():
     '''
     saves file metadata as json
