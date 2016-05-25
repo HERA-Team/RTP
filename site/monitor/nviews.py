@@ -175,7 +175,7 @@ def alert_log():
         entry_list = [rtp_log.to_dict() for rtp_log in log_query.order_by(log_table.lognum.asc()).all()]
 
     for entry in entry_list:
-        for index, log in enumerate(entry['logtext'].split('\n')):
+        for index, log in enumerate(entry['logtext'].strip().split('\n')):
             entry['logtext_{index}'.format(index=index)] = log
         del entry['logtext']
         
