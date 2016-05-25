@@ -172,11 +172,19 @@ def alert_log():
     with dbi.session_scope() as s:
         log_query = s.query(log_table).filter(log_table.obsnum == obsnum)
 
-        entry_list = [rtp_log.to_dict() for rtp_log in log_query.order_by(log_table.timestamp.asc()).all()]
+        entry_list = [rtp_log.to_dict() for rtp_log in log_query.order_by(log_table.lognum.asc()).all()]
 
+    for entry in entry_list:
+        for index, log in enumerate(entry['logtext'].split('\n')):
+            entry['logtext_{index}'.format(index=index)] = log
+        del entry['logtext']
+        
     
-    return json.dumps(entry_list, sort_keys=True,
-                      indent=4, default=rdbi.decimal_default)
+    log_data =  json.dumps(entry_list, sort_keys=True,
+                           indent=4, default=rdbi.decimal_default)
+
+    print(log_data)
+    return log_data
     #return Response(response=json.dumps(entry_list, sort_keys=True,
     #                indent=4, default=rdbi.decimal_default),
     #                status=200, mimetype='application/json',
