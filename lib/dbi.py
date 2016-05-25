@@ -658,9 +658,9 @@ class DataBaseInterface(object):
             still.status = status
             # print("STILL_CHECKIN, test mode, setting load = 0, change back before release")
             # still.current_load = 0
-            still.current_load = psutil.cpu_percent()
+            still.current_load = os.getloadavg()[1] #use the 5 min load average
             still.number_of_cores = psutil.cpu_count()
-            still.free_memory = round(psutil.virtual_memory().free / (1024 ** 3), 2)
+            still.free_memory = round(psutil.virtual_memory().available / (1024 ** 3), 2)
             still.total_memory = round(psutil.virtual_memory().total / (1024 ** 3), 2)
             still.data_dir = data_dir
             still.port = port
