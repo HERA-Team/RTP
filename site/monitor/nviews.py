@@ -439,8 +439,8 @@ def page_args():
         str: host
         str: filetype
     '''
-    jdstart = request.args.get('jd_start', 2455903)
-    jdend = request.args.get('jd_end', 2455904)
+    jdstart = request.args.get('jd_start', 2456617)
+    jdend = request.args.get('jd_end', 2456620)
     starttime = request.args.get('starttime', None)
     endtime = request.args.get('endtime', None)
 
@@ -467,8 +467,8 @@ def page_form():
         str: host
         str: filetype
     '''
-    jdstart = request.form.get('jd_start', 2455903)
-    jdend = request.form.get('jd_end', 2455904)
+    jdstart = request.form.get('jd_start', 2456617)
+    jdend = request.form.get('jd_end', 2456620)
     starttime = request.form.get('starttime', None)
     endtime = request.form.get('endtime', None)
 
@@ -638,7 +638,6 @@ def data_hist():
     start_utc, end_utc, pol, era_type, host, filetype = page_form()
 
     dbi, obs_table, file_table, log_table = db_objs()
-
     with dbi.session_scope() as s:
         days = list(range(int(start_utc), int(end_utc) + 1))
         #get julian_day, count for files, split by raw/compressed
@@ -653,7 +652,7 @@ def data_hist():
                                .order_by(func.substr(obs_table.date, 1, 7)\
                                .asc())\
                                .all()
-        file_query = ((q.observation.julian_day, count) for q, count in file_query)
+        file_query = ((int(float(q.observation.date)), count) for q, count in file_query)
         try:
             f_days, f_day_counts = zip(*file_query)
         except:
@@ -720,6 +719,7 @@ def save_obs():
     '''
     start_utc, end_utc, pol, era_type, host, filetype = page_args()
 
+    dbi, obs_table, file_table, log_table = db_objs()
     with dbi.session_scope() as s:
         obs_query = s.query(obs_table)
         obs_query = obs_filter(obs_query, obs_table,
