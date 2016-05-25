@@ -88,15 +88,18 @@ def obs_hist():
     dbi, obs_table, file_table, log_table = db_objs()
 
     with dbi.session_scope() as s:
+        all_query = s.query(obs_table, func.count(obs_table))\
+                      .group_by(func.substr(obs_table.date, 1, 7))
+        all_query = tuple((int(float(q.date)), count) for q, count in all_query.all())
+        all_days, all_counts = zip(*all_query)
+
         obs_query = s.query(obs_table, func.count(obs_table))\
                      .filter(obs_table.status == 'COMPLETE')\
                      .group_by(func.substr(obs_table.date, 1, 7))
         obs_query = ((int(float(q.date)), count) for q, count in obs_query.all())
-        obs_days, obs_counts = zip(*obs_query)
-        all_query = s.query(obs_table, func.count(obs_table))\
-                      .group_by(func.substr(obs_table.date, 1, 7))
-        all_query = ((int(float(q.date)), count) for q, count in all_query.all())
-        all_days, all_counts = zip(*all_query)
+        obs_counts = [count if day in all_days else 0 for day, count in obs_query]
+        #obs_days, obs_counts = zip(*obs_query)
+        obs_days = []
 
     return render_template('obs_hist.html',
                             obs_days=obs_days, obs_counts=obs_counts,
@@ -179,7 +182,6 @@ def alert_log():
             entry['logtext_{index}'.format(index=index)] = log
         del entry['logtext']
         
-    
     log_data =  json.dumps(entry_list, sort_keys=True,
                            indent=4, default=rdbi.decimal_default)
 
