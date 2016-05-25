@@ -175,10 +175,12 @@ def alert_log():
         entry_list = [rtp_log.to_dict() for rtp_log in log_query.order_by(log_table.timestamp.asc()).all()]
 
     
-    return Response(response=json.dumps(entry_list, sort_keys=True,
-                    indent=4, default=rdbi.decimal_default),
-                    status=200, mimetype='application/json',
-                    headers={'Content-Disposition': 'attachment; filename=file.json'})
+    return json.dumps(entry_list, sort_keys=True,
+                      indent=4, default=rdbi.decimal_default)
+    #return Response(response=json.dumps(entry_list, sort_keys=True,
+    #                indent=4, default=rdbi.decimal_default),
+    #                status=200, mimetype='application/json',
+    #                headers={'Content-Disposition': 'attachment; filename=file.json'})
 
 @app.route('/file_table', methods = ['GET', 'POST'])
 def file_table():
