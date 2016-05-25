@@ -157,6 +157,29 @@ def obs_table():
 
     return render_template('obs_table.html', failed_obs=failed_obs, killed_obs=killed_obs)
 
+@app.route('/alert_log', methods = ['GET'])
+def alert_log():
+    '''
+    saves file metadata as json
+
+    Returns
+    -------
+    html: json file
+    '''
+    obsnum = request.args.get('obsnum')
+
+    dbi, obs_table, file_table, log_table = db_objs()
+    with dbi.session_scope() as s:
+        log_query = s.query(log_table).filter(log_table.obsnum == obsnum)
+
+        entry_list = [rtp_log.to_dict() for rtp_log in log_query.order_by(log_table.timestamp.asc()).all()]
+
+    
+    return Response(response=json.dumps(entry_list, sort_keys=True,
+                    indent=4, default=rdbi.decimal_default),
+                    status=200, mimetype='application/json',
+                    headers={'Content-Disposition': 'attachment; filename=file.json'})
+
 @app.route('/file_table', methods = ['GET', 'POST'])
 def file_table():
     '''

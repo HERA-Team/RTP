@@ -12,9 +12,9 @@
     <tbody>
         {% for obs in log_list %}
         <tr>
-            <td>{{ obs['julian_date'] }}</td>
+            <td>{{ obs['date'] }}</td>
             <td>{{ obs['obsnum'] }}</td>
-            <td>{{ obs['polarization'] }}</td>
+            <td>{{ obs['pol'] }}</td>
             <td>{{ obs['length'] }}</td>
         </tr>
         {% endfor %}
