@@ -72,7 +72,7 @@
                 type: 'POST',
                 url: log_url,
                 success: function(data) {
-                    alert(JSON.stringify(data));
+                    alert(JSON.stringify(data, null, 4));
                     //window.open(JSON.stringify(data));
                 },
                 dataType: 'json'
