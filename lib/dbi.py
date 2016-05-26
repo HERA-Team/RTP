@@ -9,7 +9,7 @@ from contextlib import contextmanager
 
 # from subprocess import Popen, PIPE
 
-from sqlalchemy import Table, Column, String, Integer, ForeignKey
+from sqlalchemy import Table, BigInteger, Column, String, Integer, ForeignKey
 from sqlalchemy import Float, func, DateTime, BigInteger, Text
 from sqlalchemy.orm import relationship, backref, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
@@ -148,6 +148,7 @@ class Still(Base):
     total_memory = Column(Integer)     # Jon : Placeholder for future expansion
     cur_num_of_tasks = Column(Integer)
     max_num_of_tasks = Column(Integer)
+    free_disk = Column(BigInteger) # measured in bytes
 
 
 class DataBaseInterface(object):
@@ -647,8 +648,10 @@ class DataBaseInterface(object):
 
     def still_checkin(self, hostname, ip_addr, port, load, data_dir, status="OK", max_tasks=2, cur_tasks=0):
         ###
-        # still_checkin : Check to see if the still entry already exists in the database, if it does update the timestamp, port, data_dir, and load.
-        #                 If does not exist then go ahead and create an entry.
+        # still_checkin : Check to see if the still entry already exists in
+        #                 the database, if it does update the timestamp, port,
+        #                 data_dir, and load. If does not exist then go ahead
+        #                 and create an entry.
         ###
         s = self.Session()
 
@@ -666,6 +669,10 @@ class DataBaseInterface(object):
             still.port = port
             still.max_num_of_tasks = max_tasks
             still.cur_num_of_tasks = cur_tasks
+
+            fs_info = os.statvfs (data_dir)
+            still.free_disk = fs_info.f_frsize * fs_info.f_bavail
+
             s.add(still)
         else:  # Still doesn't exist, lets add it
             still = Still(hostname=hostname, ip_addr=ip_addr, port=port, current_load=load,
