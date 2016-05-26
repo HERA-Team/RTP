@@ -9,7 +9,7 @@ from contextlib import contextmanager
 
 # from subprocess import Popen, PIPE
 
-from sqlalchemy import Table, Column, String, Integer, ForeignKey
+from sqlalchemy import Table, BigInteger, Column, String, Integer, ForeignKey
 from sqlalchemy import Float, func, DateTime, BigInteger, Text
 from sqlalchemy.orm import relationship, backref, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
@@ -148,6 +148,7 @@ class Still(Base):
     total_memory = Column(Integer)     # Jon : Placeholder for future expansion
     cur_num_of_tasks = Column(Integer)
     max_num_of_tasks = Column(Integer)
+    free_disk = Column(BigInteger) # measured in bytes
 
 
 class DataBaseInterface(object):
@@ -646,10 +647,36 @@ class DataBaseInterface(object):
         return still
 
     def still_checkin(self, hostname, ip_addr, port, load, data_dir, status="OK", max_tasks=2, cur_tasks=0):
-        ###
-        # still_checkin : Check to see if the still entry already exists in the database, if it does update the timestamp, port, data_dir, and load.
-        #                 If does not exist then go ahead and create an entry.
-        ###
+        """Check to see if the still entry already exists in the database, if it does
+        update the timestamp, port, data_dir, and load. If does not exist then
+        go ahead and create an entry.
+
+        """
+        # Collect load statistics and classify ourselves as under duress if
+        # anything is too excessive.
+
+        current_load = os.getloadavg()[1] #use the 5 min load average
+
+        vmem = psutil.virtual_memory()
+        free_memory = vmem.available / (1024 ** 3)
+        total_memory = vmem.total / (1024 ** 3)
+
+        fs_info = os.statvfs (data_dir)
+        free_disk = fs_info.f_frsize * fs_info.f_bavail
+
+        duress = (
+            current_load >= 80 or # normalize to n_cpu()?
+            free_memory < 1 or # measured in gigs
+            free_disk < 2147483648 # measured in bytes; = 3 gigs
+        )
+
+        if duress and status == 'OK':
+            logger.warn ('still is under duress: load %s, free mem %s, free disk %s',
+                         current_load, free_memory, free_disk / 1024**3)
+            status = 'DURESS'
+
+        # Now actually update the database.
+
         s = self.Session()
 
         if s.query(Still).filter(Still.hostname == hostname).count() > 0:  # Check if the still already exists, if so just update the time
@@ -658,14 +685,16 @@ class DataBaseInterface(object):
             still.status = status
             # print("STILL_CHECKIN, test mode, setting load = 0, change back before release")
             # still.current_load = 0
-            still.current_load = os.getloadavg()[1] #use the 5 min load average
+            still.current_load = current_load
             still.number_of_cores = psutil.cpu_count()
-            still.free_memory = round(psutil.virtual_memory().available / (1024 ** 3), 2)
-            still.total_memory = round(psutil.virtual_memory().total / (1024 ** 3), 2)
+            still.free_memory = round(free_memory, 2)
+            still.total_memory = round(total_memory, 2)
             still.data_dir = data_dir
             still.port = port
             still.max_num_of_tasks = max_tasks
             still.cur_num_of_tasks = cur_tasks
+            still.free_disk = free_disk
+
             s.add(still)
         else:  # Still doesn't exist, lets add it
             still = Still(hostname=hostname, ip_addr=ip_addr, port=port, current_load=load,
@@ -690,7 +719,7 @@ class DataBaseInterface(object):
         ###
         s = self.Session()
         since = datetime.datetime.now() - datetime.timedelta(minutes=3)
-        still = s.query(Still.hostname).filter(Still.last_checkin > since, Still.status == "OK", Still.current_load < 80).order_by(Still.current_load).all()
+        still = s.query(Still.hostname).filter(Still.last_checkin > since, Still.status == "OK").order_by(Still.current_load).all()
         np.random.shuffle(still)
         s.close()
 
