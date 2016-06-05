@@ -18,7 +18,7 @@ sys.path.insert (0, os.path.join (basedir, 'lib'))
 import optparse, re
 import numpy as np
 
-from dbi import jdpol2obsnum, DataBaseInterface, Still
+from dbi import DataBaseInterface, Still
 from still import get_dbi_from_config, process_client_config_file, SpawnerClass, WorkFlow
 import hera_librarian
 
@@ -71,7 +71,7 @@ def main (args):
 
     def augment_record (r):
         return {
-            'obsnum': str (jdpol2obsnum (r['date'], r['pol'], r['length'])),
+            'obsnum': os.path.basename (r['store_path']), # NOTE: this is actually free text
             'date': r['date'],
             'date_type': 'julian',
             'pol': r['pol'],
