@@ -10,6 +10,7 @@ import datetime
 import signal
 import copy
 import pickle
+import re
 
 # import numpy as np
 from itertools import cycle
@@ -30,6 +31,30 @@ logger = True  # This is just here because the jedi syntax checker is dumb.
 MAXFAIL = 5  # Jon : move this into config
 TIME_INT_FOR_NEW_TM_CHECK = 90
 
+def file2jd(zenuv):
+    return re.findall(r'\d+\.\d+', zenuv)[0]
+
+
+def file2pol(zenuv):
+    return re.findall(r'\.(.{2})\.', zenuv)[0]
+
+str2pol = {
+    'I' :  1,   # Stokes Paremeters
+    'Q' :  2,
+    'U' :  3,
+    'V' :  4,
+    'rr': -1,   # Circular Polarizations
+    'll': -2,
+    'rl': -3,
+    'lr': -4,
+    'xx': -5,   # Linear Polarizations
+    'yy': -6,
+    'xy': -7,
+    'yx': -8,
+}
+
+pol2str = {}
+for k in str2pol: pol2str[str2pol[k]] = k
 
 def action_cmp(x, y):
     return cmp(x.priority, y.priority)
@@ -526,8 +551,9 @@ class Scheduler(ThreadingMixIn, HTTPServer):
     def determine_priority(self, action):
         '''Assign a priority to an action based on its status and the time
         order of the obs to which this action is attached.'''
-
-        pol, jdcnt = int(action.obs) / 2 ** 32, int(action.obs) % 2 ** 32  # XXX maybe not make this have to explicitly match dbi bits
+        jdcnt = (float(file2jd(action.obs))- 2415020)/0.005 #get the jd and convert to an integer (0.005 is the length of a typical PAPER obs)
+        pol = str2pol[file2pol(action.obs)]
+        #pol, jdcnt = int(action.obs) / 2 ** 32, int(action.obs) % 2 ** 32  # XXX maybe not make this have to explicitly match dbi bits
         return jdcnt * 4 + pol  # prioritize first by time, then by pol
         # XXX might want to prioritize finishing a obs already started before
         # moving to the latest one (at least, up to a point) to avoid a
