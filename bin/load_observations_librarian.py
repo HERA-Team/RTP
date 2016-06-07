@@ -23,7 +23,7 @@ from still import get_dbi_from_config, process_client_config_file, SpawnerClass,
 import hera_librarian
 
 rtp_ingested_key = 'rtp.ingested'
-initial_status = 'NEW'
+initial_status = 'UV_POT'
 
 
 def main (args):
