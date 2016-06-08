@@ -18,4 +18,5 @@ store_path="$2"
 #ie in a librarian path like /data2/stuff/2456789/zen.2456789.34775.uv
 # /data2/stuff is the "store"
 # 2456789/zen.2456789.34775.uv is the store_path
-# zen.2456789.34775.uv is the basenameupload_to_librarian.py $conn $(basename $store_path) $store_path
+# zen.2456789.34775.uv is the basename
+upload_to_librarian.py $conn $(basename $store_path) $store_path
