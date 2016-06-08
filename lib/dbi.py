@@ -627,6 +627,23 @@ class DataBaseInterface(object):
 
         return status
 
+    def get_obs_latest_log(self, obsnum):
+        """Return the latest log item associated with an obsnum. Returns None
+        if the obsnum has no log items.
+
+        """
+        with self.session_scope() as s:
+            item = s.query(Log).filter (Log.obsnum == obsnum).order_by(Log.timestamp.desc ()).first ()
+            if item is None:
+                return None
+            return {
+                'stage': item.stage,
+                'exit_status': item.exit_status,
+                'start_time': item.start_time,
+                'end_time': item.end_time,
+                'logtext': item.logtext,
+            }
+
     def get_available_stills(self):
         ###
         # get_available_stills : Retrun all stills that have checked in within the past 3min and have status of "OK"
