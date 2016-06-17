@@ -51,6 +51,8 @@ o.add_option('--plot_each', dest='plot_each',
     help='Instead of a waterfall plot, plot each of the specified axis (chan,time)')
 o.add_option('--window', dest='window', default='blackman-harris',
     help='Windowing function to use in delay transform.  Default is blackman-harris.  Options are: ' + ', '.join(a.dsp.WINDOW_FUNC.keys()))
+o.add_option('--pretty', dest='pretty', action='store_true',
+    help='Plot pretty looking plots with minimal axes writing and small tick and font sizes.')
 
 def convert_arg_range(arg):
     """Split apart command-line lists/ranges into a list of numbers."""
@@ -204,6 +206,7 @@ if len(bls) == 0:
     sys.exit(0)
 m2 = int(n.sqrt(len(bls)))
 m1 = int(n.ceil(float(len(bls)) / m2))
+nsub = m2*m1
 
 # Generate all the plots
 dmin,dmax = None, None
@@ -364,13 +367,26 @@ for cnt, bl in enumerate(bls):
         if not opts.ylim == None: p.ylim(*opts.ylim)
         else: p.ylim(dmin,dmax)
     else: raise ValueError('Either time or chan needs to be a range.')
+    
+    if opts.pretty:
+        p.xlabel(xlabel,fontsize=8)
+        if (cnt % m1): p.yticks([]);p.ylabel('') #puts y-labels only on left side
+        if ((m2-1)*m1>(cnt%nsub+(m2*m1-nsub))): p.xticks([]);p.xlabel('') #puts x-labels only on right side
+        #p.tight_layout()
+        p.subplots_adjust(wspace=0,hspace=0.7,left=0.075,right=0.95,bottom=0.1,top=0.95)
+        p.tick_params(axis='both', which='major', labelsize=6)
+        #p.tight_layout()
+    
     if not opts.share:
         i,j,pol = map(int,bl.split(','))
         pol = a.miriad.pol2str[pol]
         title = '%d%s,%d%s ' % (i,pol[0],j,pol[-1])
-        p.title(title)
+        if opts.pretty: p.title(title,fontsize=8)
+        else: p.title(title)
+
 if not opts.nolegend and (not is_time_range or not is_chan_range):
-    p.legend(loc='best')
+    if opts.pretty: p.legend(loc='best',prop={'size':8})
+    else: p.legend(loc='best')
 
 # Save to a file or pop up a window
 if opts.out_file != '': p.savefig(opts.out_file)
