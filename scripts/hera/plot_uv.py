@@ -307,7 +307,10 @@ for cnt, bl in enumerate(bls):
         else:
             if opts.chan_axis == 'index':
                 plot_chans = chans
-                xlabel = 'Frequency (chan)'
+                if opts.pretty: #only putting x-label at bottom 
+                    if cnt+1 == (m2*m1)-m1/2: xlabel = 'Frequency (chan)'
+                    else: xlabel = ''
+                else: xlabel = 'Frequency (chan)'
             else:
                 plot_chans = freqs
                 xlabel = 'Frequency (GHz)'
@@ -368,24 +371,23 @@ for cnt, bl in enumerate(bls):
         else: p.ylim(dmin,dmax)
     else: raise ValueError('Either time or chan needs to be a range.')
     
-    if opts.pretty:
-        p.xlabel(xlabel,fontsize=8)
-        if (cnt % m1): p.yticks([]);p.ylabel('') #puts y-labels only on left side
-        if ((m2-1)*m1>(cnt%nsub+(m2*m1-nsub))): p.xticks([]);p.xlabel('') #puts x-labels only on right side
-        #p.tight_layout()
-        p.subplots_adjust(wspace=0,hspace=0.7,left=0.075,right=0.95,bottom=0.1,top=0.95)
+    if opts.pretty: #formatting tick marks and subplots_adjust
+        p.xlabel(xlabel,fontsize=10)
+        if (cnt % m1): p.yticks([]);p.ylabel('') #puts y-ticks and y-labels only on left side
+        if ((m2-1)*m1>(cnt%nsub+(m2*m1-nsub))): p.xticks([]) #puts x-ticks only on bottom
+        p.subplots_adjust(wspace=0,hspace=0,left=0.05,right=0.98,bottom=0.07,top=0.98)
         p.tick_params(axis='both', which='major', labelsize=6)
         #p.tight_layout()
-    
     if not opts.share:
         i,j,pol = map(int,bl.split(','))
         pol = a.miriad.pol2str[pol]
         title = '%d%s,%d%s ' % (i,pol[0],j,pol[-1])
-        if opts.pretty: p.title(title,fontsize=8)
+        if opts.pretty: #formatting title
+            p.text(plot_chans[len(plot_chans)/8],dmin+(dmax-dmin)/4,title,fontsize=6)
         else: p.title(title)
 
 if not opts.nolegend and (not is_time_range or not is_chan_range):
-    if opts.pretty: p.legend(loc='best',prop={'size':8})
+    if opts.pretty: p.legend(loc=4,prop={'size':6}) #formatting legend
     else: p.legend(loc='best')
 
 # Save to a file or pop up a window
