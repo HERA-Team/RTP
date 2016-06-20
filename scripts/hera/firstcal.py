@@ -11,7 +11,9 @@ o.add_option('--ex_ants', action='store', type='string', default='',
 opts,args = o.parse_args(sys.argv[1:])
 PLOT=opts.plot
 
-print opts.ex_ants
+uv = a.miriad.UV(args[0])
+opts.pol=a.miriad.pol2str[uv['pol']]
+del(uv)
 
 def flatten_reds(reds):
     freds = []
@@ -34,10 +36,10 @@ def normalize_data(datadict):
     d = {}
     for key in datadict.keys():
         d[key] = datadict[key]/n.where(n.abs(datadict[key]) == 0., 1., n.abs(datadict[key]))
-    return d 
+    return d
 
 
-    
+
 #hera info assuming a hex of 19 and 128 antennas
 aa = a.cal.get_aa(opts.cal, n.array([.150]))
 bad_ants = [ant for ant in map(int,opts.ex_ants)]
@@ -51,7 +53,7 @@ bl_string = ','.join(['_'.join(map(str,k)) for k in reds])
 times, data, flags = arp.get_dict_of_uv_data(args, bl_string, opts.pol, verbose=True)
 dataxx = {}
 for (i,j) in data.keys():
-    dataxx[(i,j)] = data[(i,j)]['xx']
+    dataxx[(i,j)] = data[(i,j)][opts.pol]
 fqs = n.linspace(.1,.2,1024)
 dlys = n.fft.fftshift(n.fft.fftfreq(fqs.size, fqs[1]-fqs[0]))
 
@@ -91,7 +93,7 @@ if PLOT:
     #fig,ax = p.subplots(nrows=nr,ncols=nc,figsize=(14,10))
     #for i,bl in enumerate(redbls):
     #    bl = (bl[0],bl[1])
-    #    try: 
+    #    try:
     #        waterfall(dataxx[bl], ax[divmod(i,nc)], mode='phs')
     #        ax[divmod(i,nc)].set_title('%d,%d'%(bl))
     #    except(KeyError):

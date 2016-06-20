@@ -1,0 +1,23 @@
+{% block content %}
+<table class='table table-striped table-bordered table-responsive' style='margin:0;'>
+    <tr>
+        <th colspan='4'>Observation log for {{ start_time }} - {{ end_time }} | Pol: {{ polarization }} | Era Type: {{ era_type }}</th>
+    </tr>
+    <tr>
+        <th style='width:30%'>Julian Date</th>
+        <th style='width:30%'>Obsnum</th>
+        <th style='width:10%'>Polarization</th>
+        <th style='width:30%'>Length</th>
+    </tr>
+    <tbody>
+        {% for obs in log_list %}
+        <tr>
+            <td>{{ obs['date'] }}</td>
+            <td>{{ obs['obsnum'] }}</td>
+            <td>{{ obs['pol'] }}</td>
+            <td>{{ obs['length'] }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

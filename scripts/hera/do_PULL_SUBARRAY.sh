@@ -1,2 +1,3 @@
 #! /bin/bash
-pull_subarrays.sh $1
+set -e
+pull_subarrays_simple.sh $1

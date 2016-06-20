@@ -15,8 +15,8 @@ echo 'working on ' ${FILE}
 
 
 if [[ ! -e ${BASE}PP.uvc ]]; then
-    echo pull_antpols.py -p ${POL} -a "($POL_ARR)_($POL_ARR)" ${FILE}
-    pull_antpols.py -p ${POL} -a "($POL_ARR)_($POL_ARR)" ${FILE}
+    echo pull_antpols_simple.py -p ${POL} -a $POL_ARR ${FILE}
+    pull_antpols_simple.py -p ${POL} -a $POL_ARR ${FILE}
     echo ${FILE}A -\> ${BASE}PP.uvc
     mv ${FILE}A ${BASE}PP.uvc
 else
@@ -24,8 +24,8 @@ else
 fi
 
 if [[ ! -e ${BASE}HH.uvc ]]; then
-    echo pull_antpols.py -p ${POL} -a "($HERA_HEX)_($HERA_HEX)" ${FILE}
-    pull_antpols.py -p ${POL} -a "($HERA_HEX)_($HERA_HEX)" ${FILE}
+    echo pull_antpols_simple.py -p ${POL} -a $HERA_HEX ${FILE}
+    pull_antpols_simple.py -p ${POL} -a $HERA_HEX ${FILE}
     echo ${FILE}A -\> ${BASE}HH.uvc
     mv ${FILE}A ${BASE}HH.uvc
 else
@@ -33,8 +33,8 @@ else
 fi
 
 if [[ ! -e ${BASE}PH.uvc ]]; then
-    echo pull_antpols.py -p ${POL} -a "($PAPER_HEX)_($PAPER_HEX)" ${FILE}
-    pull_antpols.py -p ${POL} -a "($PAPER_HEX)_($PAPER_HEX)" ${FILE}
+    echo pull_antpols_simple.py -p ${POL} -a $PAPER_HEX ${FILE}
+    pull_antpols_simple.py -p ${POL} -a $PAPER_HEX ${FILE}
     echo ${FILE}A -\> ${BASE}PH.uvc
     mv ${FILE}A ${BASE}PH.uvc
 else
@@ -42,8 +42,8 @@ else
 fi
 
 if [[ ! -e ${BASE}PI.uvc ]]; then
-    echo pull_antpols.py -p ${POL} -a "($IMG_ARR)_($IMG_ARR)" ${FILE}
-    pull_antpols.py -p ${POL} -a "($IMG_ARR)_($IMG_ARR)" ${FILE}
+    echo pull_antpols_simple.py -p ${POL} -a $IMG_ARR ${FILE}
+    pull_antpols_simple.py -p ${POL} -a $IMG_ARR ${FILE}
     echo ${FILE}A -\> ${BASE}PI.uvc
     mv ${FILE}A ${BASE}PI.uvc
 else

@@ -1,4 +1,5 @@
 #! /bin/bash
+set -e
 #
 # example configuration: args = ['onsite', '%s/%s' % (parent_dirs,basename)]
 #
@@ -18,4 +19,4 @@ store_path="$2"
 # /data2/stuff is the "store"
 # 2456789/zen.2456789.34775.uv is the store_path
 # zen.2456789.34775.uv is the basename
-exec upload_to_librarian.py $conn $(basename $store_path) $store_path
+upload_to_librarian.py $conn $(basename $store_path) $store_path

@@ -1,4 +1,4 @@
-#error_table, #obs_table, #file_table table {
+#obs_table, #file_table, #search_obs, #search_file table {
 	table-layout: fixed;
 	width: 50%;
 	max-width: 100%;
@@ -22,7 +22,7 @@
 	text-align: center;
 }
 
-#obs_hist, #prog_hist, #failed_hist, #night_hist {
+#obs_hist, #prog_hist, #failed_hist, #night_hist, #data_hist {
     /*width: 100%;*/
     height: 400px;
     margin: 0;

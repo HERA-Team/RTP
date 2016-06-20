@@ -18,13 +18,12 @@ sys.path.insert (0, os.path.join (basedir, 'lib'))
 import optparse, re
 import numpy as np
 
-from dbi import jdpol2obsnum, DataBaseInterface, Still
+from dbi import DataBaseInterface, Still
 from still import get_dbi_from_config, process_client_config_file, SpawnerClass, WorkFlow
 import hera_librarian
 
-librarian_source = 'Correlator'
 rtp_ingested_key = 'rtp.ingested'
-initial_status = 'NEW'
+initial_status = 'UV_POT'
 
 
 def main (args):
@@ -32,12 +31,15 @@ def main (args):
     o.set_usage ('load_observations_librarian.py')
     o.set_description (__doc__)
     o.add_option('--connection', help='the name of the Librarian connection to use (as in ~/.hl_client.cfg)')
+    o.add_option('--config_file',help='RTP configuration file default=RTP/etc/still.cfg',default='etc/still.cfg')
+    o.add_option('--source', help='Only load files originating from the named "source" (default "%default")',
+                 default='correlator')
     opts, args = o.parse_args (args)
 
     # Some boilerplate to set up the database interface ...
     spawner = SpawnerClass()
     workflow = WorkFlow()
-    spawner.config_file = os.path.join (basedir, 'etc/still.cfg')
+    spawner.config_file = os.path.join (basedir, opts.config_file)
     process_client_config_file (spawner, workflow)
     dbi = get_dbi_from_config (spawner.config_file)
     dbi.test_db ()
@@ -46,9 +48,9 @@ def main (args):
 
     lc = hera_librarian.LibrarianClient (opts.connection)
     try:
-        listing = lc.describe_session_without_event (librarian_source,
+        listing = lc.describe_session_without_event (opts.source,
                                                      rtp_ingested_key)
-    except hera_librarian.RPCFailedError as e:
+    except hera_librarian.RPCError as e:
         print ('RPC to librarian failed: %s' % e.message)
         sys.exit (1)
 
@@ -70,7 +72,7 @@ def main (args):
 
     def augment_record (r):
         return {
-            'obsnum': str (jdpol2obsnum (r['date'], r['pol'], r['length'])),
+            'obsnum': os.path.basename (r['store_path']), # NOTE: this is actually free text
             'date': r['date'],
             'date_type': 'julian',
             'pol': r['pol'],
