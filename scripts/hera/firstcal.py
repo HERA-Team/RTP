@@ -72,7 +72,7 @@ times, data, flags = arp.get_dict_of_uv_data(args, bl_string, opts.pol, verbose=
 dataxx = {} #not necessarily xx data inside
 for (i,j) in data.keys():
     dataxx[(i,j)] = data[(i,j)][opts.pol]
-fqs = n.linspace(.1,.2,203) #XXX
+fqs = n.linspace(.1,.2,1024)
 dlys = n.fft.fftshift(n.fft.fftfreq(fqs.size, fqs[1]-fqs[0]))
 
 #gets phase solutions per frequency.
