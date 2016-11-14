@@ -14,9 +14,7 @@ def mfunc(uv,p,d,f):
     else:
         return p,None,None
 
-ants = []
-for ant in opts.ant.split(','):
-    ants.append(int(ant))
+ants = map(int,opts.ant.split(','))
 
 for filename in args:
     print filename, '->', filename+'A'
@@ -27,4 +25,3 @@ for filename in args:
     uvo = a.miriad.UV(filename+'A',status='new')
     uvo.init_from_uv(uvi)
     uvo.pipe(uvi,raw=True,mfunc=mfunc,append2hist='PULL ANTPOLS:'+' '.join(sys.argv)+'\n')
-
