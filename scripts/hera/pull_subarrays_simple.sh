@@ -12,16 +12,14 @@ POL=${NAME:18:2}
 
 echo 'working on ' ${FILE}
 
-
-
-if [[ ! -e ${BASE}PP.uvc ]]; then
-    echo pull_antpols_simple.py -p ${POL} -a $POL_ARR ${FILE}
-    pull_antpols_simple.py -p ${POL} -a $POL_ARR ${FILE}
-    echo ${FILE}A -\> ${BASE}PP.uvc
-    mv ${FILE}A ${BASE}PP.uvc
-else
-    echo ${BASE}PP.uvc exists... skipping...
-fi
+# if [[ ! -e ${BASE}PP.uvc ]]; then
+#     echo pull_antpols_simple.py -p ${POL} -a $POL_ARR ${FILE}
+#     pull_antpols_simple.py -p ${POL} -a $POL_ARR ${FILE}
+#     echo ${FILE}A -\> ${BASE}PP.uvc
+#     mv ${FILE}A ${BASE}PP.uvc
+# else
+#     echo ${BASE}PP.uvc exists... skipping...
+# fi
 
 if [[ ! -e ${BASE}HH.uvc ]]; then
     echo pull_antpols_simple.py -p ${POL} -a $HERA_HEX ${FILE}
@@ -32,20 +30,20 @@ else
     echo ${BASE}HH.uvc exists... skipping...
 fi
 
-if [[ ! -e ${BASE}PH.uvc ]]; then
-    echo pull_antpols_simple.py -p ${POL} -a $PAPER_HEX ${FILE}
-    pull_antpols_simple.py -p ${POL} -a $PAPER_HEX ${FILE}
-    echo ${FILE}A -\> ${BASE}PH.uvc
-    mv ${FILE}A ${BASE}PH.uvc
-else
-    echo ${BASE}PH.uvc exists... skipping...
-fi
+# if [[ ! -e ${BASE}PH.uvc ]]; then
+#     echo pull_antpols_simple.py -p ${POL} -a $PAPER_HEX ${FILE}
+#     pull_antpols_simple.py -p ${POL} -a $PAPER_HEX ${FILE}
+#     echo ${FILE}A -\> ${BASE}PH.uvc
+#     mv ${FILE}A ${BASE}PH.uvc
+# else
+#     echo ${BASE}PH.uvc exists... skipping...
+# fi
 
-if [[ ! -e ${BASE}PI.uvc ]]; then
-    echo pull_antpols_simple.py -p ${POL} -a $IMG_ARR ${FILE}
-    pull_antpols_simple.py -p ${POL} -a $IMG_ARR ${FILE}
-    echo ${FILE}A -\> ${BASE}PI.uvc
-    mv ${FILE}A ${BASE}PI.uvc
-else
-    echo ${BASE}PI.uvc exists... skipping...
-fi
+# if [[ ! -e ${BASE}PI.uvc ]]; then
+#     echo pull_antpols_simple.py -p ${POL} -a $IMG_ARR ${FILE}
+#     pull_antpols_simple.py -p ${POL} -a $IMG_ARR ${FILE}
+#     echo ${FILE}A -\> ${BASE}PI.uvc
+#     mv ${FILE}A ${BASE}PI.uvc
+# else
+#     echo ${BASE}PI.uvc exists... skipping...
+# fi
