@@ -497,6 +497,22 @@ class DataBaseInterface(object):
         s.close()
         return (low, high)
 
+    def get_pol_neighbors(self, obsnum):
+        """
+        get the accompanying polarizations for a given obsnum
+        input: obsnum
+        return: list of all obsnums with same date (so we should have 4 total)
+        """
+        s = self.Session()
+        OBS = s.query(Observation).filter(Observation.obsnum == obsnum).one()
+        neighbobrs = s.query(Observation).filter(Observation.date == OBS.date)
+        obsnums = []
+        for n in neighbors:
+            if n.obsnum != obsnum:
+                obsnums.append(n.obsnum)
+        s.close()
+        return obsnums
+
     def get_obs_still_host(self, obsnum):
         """
         input: obsnum
