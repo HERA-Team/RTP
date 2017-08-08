@@ -33,6 +33,7 @@ class WorkFlow:
         self.workflow_actions_endfile = ''
         self.prioritize_obs = 0
         self.neighbors = 0
+        self.pol_neighbors = 0
         self.still_locked_after = ''
         self.drmma_args = []   # I think this will be useful but will want to be cautious of -o and -e being passed overriding our settings.
         self.default_drmma_queue = ''
@@ -217,6 +218,7 @@ def process_client_config_file(sg, wf):
         wf.still_locked_after = get_config_entry(config, 'WorkFlow', 'still_locked_after', reqd=False, remove_spaces=True)  # Do I still use this?
         wf.default_drmaa_queue = get_config_entry(config, 'WorkFlow', 'default_drmaa_queue', reqd=False, remove_spaces=True)
         wf.neighbors = int(get_config_entry(config, 'WorkFlow', 'neighbors', reqd=False, remove_spaces=False, default_val=0))
+        wf.pol_neighbors = int(get_config_entry(config, 'WorkFlow', 'pol_neighbors', reqd=False, remove_spaces=False, default_val=0))
         wf.lock_all_neighbors_to_same_still = int(get_config_entry(config, 'WorkFlow', 'lock_all_neighbors_to_same_still', reqd=False, remove_spaces=False, default_val=0))
 
         for action in wf.workflow_actions or wf.workflow_actions_endfile:      # Collect all the prereqs and arg strings for any action of the workflow and throw them into a dict of keys and lists

@@ -1,7 +1,10 @@
 #! /bin/bash
 set -e
-f=$(basename $1 uvc)
-for ext in HH ; do
-    echo rm -rf ${f}$ext.uvc.first.calfits
-    rm -rf ${f}$ext.uvc.first.calfits
-done
+
+# get common functions
+source _common.sh
+
+if is_lin_pol $1; then
+    echo rm -rf ${1}.first.calfits
+    rm -rf ${1}.first.calfits
+fi

@@ -292,8 +292,8 @@ class TaskClient:
                          + self.dbi.get_input_file(n) for n in self.dbi.get_neighbors(obs) if n is not None]
             neighbors_base = list(self.dbi.get_neighbors(obs))
         else:
-            neighbors = [(self.dbi.get_obs_still_host(n), self.dbi_get_still_info(self.host_port[0]).data_dir)
-                         + self.dbi_get_input_file(n) for n in self.dbi.get_pol_neighbors(obs) if n is not None]
+            neighbors = [(self.dbi.get_obs_still_host(n), self.dbi.get_still_info(self.host_port[0]).data_dir)
+                         + self.dbi.get_input_file(n) for n in self.dbi.get_pol_neighbors(obs) if n is not None]
             neighbors_base = list(self.dbi.get_pol_neighbors(obs))
         if not neighbors_base[0] is None:
             neighbors_base[0] = self.dbi.get_input_file(neighbors_base[0])[-1]

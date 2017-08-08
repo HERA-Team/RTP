@@ -1,26 +1,30 @@
 #! /bin/bash 
 set -e
+
+# import common functions
+source _common.sh
+
 # run script from hera_qm
 CALBASE=hsa7458_v001
-f1=$(basename $1 uvc)
-f2=$(basename $2 uvc)
-f3=$(basename $3 uvc)
-f4=$(basename $4 uvc)
+fn=$(basename $1 uvc)
 
-# function for concatenating strings
-# from https://stackoverflow.com/questions/1527049/join-elements-of-an-array
-# example syntax: (join_by , a b c) -> a,b,c
-function join_by { local IFS="$1"; shift; echo "$*"; }
+# define polarizations
+pol1="xx"
+pol2="yy"
+pol3="xy"
+pol4="yx"
 
-for ext in HH ; do
-    pol1=$(echo $f1 | sed -e 's/.*\.\(..\)\.$/\1/')
-    pol2=$(echo $f2 | sed -e 's/.*\.\(..\)\.$/\1/')
-    pol3=$(echo $f3 | sed -e 's/.*\.\(..\)\.$/\1/')
-    pol4=$(echo $f4 | sed -e 's/.*\.\(..\)\.$/\1/')
-
+# we only want to run this script for the "xx" thread
+if is_same_pol $fn $pol1; then
     # make comma-separated list of polarizations
     pols=$(join_by , $pol1 $pol2 $pol3 $pol4)
 
-    echo ant_metrics_run.py -C ${CALBASE} -p $pols --crossCut=5 --deadCut=5 --extension=.ant_metrics.json --vis_format=miriad ${f1}$ext.uvc ${f2}$ext.uvc ${f3}$ext.uvc ${f4}$ext.uvc
-    ant_metrics_run.py -C ${CALBASE} -p $pols --crossCut=5 --deadCut=5 --extension=.ant_metrics.json --vis_format=miriad ${f1}$ext.uvc ${f2}$ext.uvc ${f3}$ext.uvc ${f4}$ext.uvc
-done
+    # make new filenames for polarizations
+    fn1=$(replace_pol $fn $pol1)
+    fn2=$(replace_pol $fn $pol2)
+    fn3=$(replace_pol $fn $pol3)
+    fn4=$(replace_pol $fn $pol4)
+
+    echo ant_metrics_run.py -C ${CALBASE} -p $pols --crossCut=5 --deadCut=5 --extension=.ant_metrics.json --vis_format=miriad ${fn1}HH.uvc ${fn2}HH.uvc ${fn3}HH.uvc ${fn4}HH.uvc
+    ant_metrics_run.py -C ${CALBASE} -p $pols --crossCut=5 --deadCut=5 --extension=.ant_metrics.json --vis_format=miriad ${fn1}HH.uvc ${fn2}HH.uvc ${fn3}HH.uvc ${fn4}HH.uvc
+fi

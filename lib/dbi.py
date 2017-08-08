@@ -505,9 +505,8 @@ class DataBaseInterface(object):
         """
         s = self.Session()
         OBS = s.query(Observation).filter(Observation.obsnum == obsnum).one()
-        neighbobrs = s.query(Observation).filter(Observation.date == OBS.date)
         obsnums = []
-        for n in neighbors:
+        for n in s.query(Observation).filter(Observation.date == OBS.date).distinct():
             if n.obsnum != obsnum:
                 obsnums.append(n.obsnum)
         s.close()

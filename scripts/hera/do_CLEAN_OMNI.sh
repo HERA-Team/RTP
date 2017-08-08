@@ -1,7 +1,15 @@
 #! /bin/bash
 set -e
-f=$(basename $1 uvc)
-for ext in HH ; do
-    echo rm -rf ${f}$ext.uvc.omni.calfits
-    rm -rf ${f}$ext.uvc.omni.calfits
+
+# get common functions
+source _common.sh
+
+# define base polarization
+pol1="xx"
+
+if is_same_pol $1 $pol1; then
+    # get base filename
+    base_fn=$(remove_pol $1)
+    echo rm -rf ${base_fn}.omni.calfits
+    rm -rf ${base_fn}.omni.calfits
 done
