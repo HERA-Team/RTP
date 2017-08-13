@@ -99,7 +99,8 @@ for night in nights:
     nightfiles = [filename for filename in args if int(float(file2jd(filename))) == night]
     print len(nightfiles)
     for pol in pols:
-        files = [filename for filename in nightfiles if file2pol(filename) == pol]  # filter off all pols but the one I'm currently working on
+        # filter off all pols but the one I'm currently working on
+        files = [filename for filename in nightfiles if file2pol(filename) == pol]
         files.sort()
         for i, filename in enumerate(files):
             obsnum = str(jdpol2obsnum(float(file2jd(filename)), file2pol(filename), djd))
@@ -134,7 +135,8 @@ for night in nights:
         print "HERE is what would have been added"
         for obs in obsinfo:
             print("Filename : %s, obsnum: %s") % (obs['filename'], obs['obsnum'])
-            print("neighbors - Low: %s  High: %s") % (obs.get('neighbor_low', None), obs.get('neighbor_high', None))
+            print("neighbors - Low: %s  High: %s") % (obs.get('neighbor_low', None),
+                                                      obs.get('neighbor_high', None))
     elif len(obsinfo) > 0:
         print("adding %s observations to the still db") % len(obsinfo)
         try:

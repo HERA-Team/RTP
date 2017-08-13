@@ -294,7 +294,9 @@ def start_server(sg, wf, args):
     sg.logger = setup_logger("TS", "DEBUG", sg.log_path)
     sg.preflight_check_ts(wf)
 
-    task_server = TaskServer(sg.dbi, sg, data_dir=mydata_dir, port=my_port, path_to_do_scripts=sg.path_to_do_scripts, drmaa_shared=sg.drmaa_shared)
+    task_server = TaskServer(sg.dbi, sg, data_dir=mydata_dir, port=my_port,
+                             path_to_do_scripts=sg.path_to_do_scripts,
+                             drmaa_shared=sg.drmaa_shared, workflow=wf)
     task_server.start()
     return
 

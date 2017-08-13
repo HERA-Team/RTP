@@ -1,1 +1,6 @@
-import scheduler, task_server, dbi
+import scheduler
+import task_server
+import dbi
+import version
+
+version = version.version

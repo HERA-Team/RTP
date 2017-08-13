@@ -1,3 +1,5 @@
+from __future__ import print_function, division, absolute_import
+
 import threading
 import time
 import socket
@@ -11,6 +13,8 @@ import sys
 import psutil
 import pickle
 import subprocess
+import math
+import astropy.time as atime
 
 from string import upper
 
@@ -27,7 +31,8 @@ FAIL_ON_ERROR = 1
 
 
 class Task:
-    def __init__(self, task, obs, still, args, drmaa_args, drmaa_queue, dbi, TaskServer, cwd='.', path_to_do_scripts=".", custom_env_vars={}):
+    def __init__(self, task, obs, still, args, drmaa_args, drmaa_queue, dbi, TaskServer, cwd='.',
+                 path_to_do_scripts=".", custom_env_vars={}):
         self.task = task
         self.obs = obs
         self.still = still
@@ -73,8 +78,11 @@ class Task:
         process = psutil.Popen(['%s/do_%s.sh' % (self.path_to_do_scripts, self.task)] + self.args,
                                cwd=self.cwd, env=self.full_env, stdout=stdout_stderr_buf, stderr=subprocess.STDOUT)
         try:
-            process.nice(2)  # Jon : I want to set all the processes evenly so they don't compete against core OS functionality (ssh, cron etc..) slowing things down.
-            if PLATFORM != "Darwin":  # Jon : cpu_affinity doesn't exist for the mac, testing on a mac... yup... good story.
+            process.nice(2)
+            # Jon : I want to set all the processes evenly so they don't compete against core OS
+            #    functionality (ssh, cron etc..) slowing things down.
+            if PLATFORM != "Darwin":
+                # Jon : cpu_affinity doesn't exist for the mac, testing on a mac... yup... good story.
                 process.cpu_affinity(range(psutil.cpu_count()))
         except:
             logger.exception("Could not set cpu affinity")
@@ -87,7 +95,9 @@ class Task:
         #self.stdout_stderr_file = "%s/%s_%s.stdout_stderr" % (self.ts.drmaa_shared, self.obs, self.task)
         self.remove_file_if_exists(self.stdout_stderr_file)
 
-        jt.nativeSpecification = "%s -q %s -wd %s -V -j y -o %s" % (self.drmaa_args, self.drmaa_queue, self.cwd, self.stdout_stderr_file)  # Don't forget -e as well..
+        # Don't forget -e as well..
+        jt.nativeSpecification = "%s -q %s -wd %s -V -j y -o %s" % (
+            self.drmaa_args, self.drmaa_queue, self.cwd, self.stdout_stderr_file)
         jt.args = self.args
         jt.joinFiles = True
         jid = self.ts.drmaa_session.runJob(jt)  # Get the Job ID
@@ -98,12 +108,15 @@ class Task:
 
         logger.info('Task._run: (%s, %s) %s cwd=%s' % (self.task, self.obs, ' '.join(['do_%s.sh' % self.task] + self.args), self.cwd))
 
-        current_env = os.environ  # Combine the current environment that the TaskManager is running in with any additional ones for the do_ script specified in conf file
+        # Combine the current environment that the TaskManager is running in
+        #    with any additional ones for the do_ script specified in conf file
+        current_env = os.environ 
         global_env_vars = {'obsnum': self.obs, 'task': self.task}
         self.full_env = current_env.copy()
         self.full_env.update(self.custom_env_vars)
         self.full_env.update(global_env_vars)
-        self.full_env['PATH'] =self.path_to_do_scripts+':'+self.full_env['PATH'] #always look in do scripts dir. this is where we're putting production python scripts.
+        # always look in do scripts dir. this is where we're putting production python scripts.
+        self.full_env['PATH'] =self.path_to_do_scripts+':'+self.full_env['PATH']
 
         try:
             if self.sg.cluster_scheduler == 1:  # Do we need to interface with a cluster scheduler?
@@ -112,14 +125,17 @@ class Task:
             else:
                 process = self.run_popen()  # Use Popen to run a normal process
         except Exception:
-            logger.exception('Task._run: (%s,%s) error="%s"' % (self.task, self.obs, ' '.join(['%s/do_%s.sh' % (self.path_to_do_scripts, self.task)] + self.args)))
+            logger.exception('Task._run: (%s,%s) error="%s"' % (
+                self.task, self.obs, ' '.join(['%s/do_%s.sh' % (
+                    self.path_to_do_scripts, self.task)] + self.args)))
             self.record_failure()
             if FAIL_ON_ERROR == 1:
                 self.ts.shutdown()
 
         try:
             self.dbi.update_obs_current_stage(self.obs, self.task)
-            self.dbi.add_log(self.obs, self.task, ' '.join(['%sdo_%s.sh' % (self.path_to_do_scripts, self.task)] + self.args + ['\n']), None)
+            self.dbi.add_log(self.obs, self.task, ' '.join(
+                ['%sdo_%s.sh' % (self.path_to_do_scripts, self.task)] + self.args + ['\n']), None)
         except:
             logger.exception("Could not update database")
 
@@ -130,12 +146,15 @@ class Task:
             with open(self.stdout_stderr_file, 'r') as output_file:  # Read in stdout/stderr combined file
                 task_output = output_file.read()
         except:
-            logger.debug("Task.finalize : Could not open stdout/stderr file for obs: %s  and task : %s marking task as FAILED" % (self.obs, self.task))
+            logger.debug(
+                "Task.finalize : Could not open stdout/stderr file for obs: %s  and task :'
+                ' %s marking task as FAILED" % (self.obs, self.task))
             self.record_failure()
             return
 
         if self.sg.cluster_scheduler == 1:
-            task_info = self.ts.drmaa_session.wait(self.jid, self.ts.drmaa_session.TIMEOUT_WAIT_FOREVER)  # get JobInfo instance
+            # get JobInfo instance
+            task_info = self.ts.drmaa_session.wait(self.jid, self.ts.drmaa_session.TIMEOUT_WAIT_FOREVER)
             task_return_code = task_info.exitStatus
         else:
             # task_output = self.process.communicate()[0]
@@ -144,10 +163,14 @@ class Task:
         self.dbi.update_log(self.obs, status=self.task, logtext=task_output, exit_status=task_return_code)
 
         if task_return_code != 0:  # If the task didn't return with an exit code of 0 mark as failure
-            logger.error("Task.finalize : Task Failed : Obsnum: %s , Task: %s, Exit Code: %s, OUTPUT : %s" % (self.task, self.obs, task_return_code, task_output))
+            logger.error(
+                "Task.finalize : Task Failed : Obsnum: %s , Task: %s, Exit Code: %s, OUTPUT : %s"
+                % (self.task, self.obs, task_return_code, task_output))
             self.record_failure()
         else:
-            logger.debug("Task.finalize : Task Succeeded : Obsnum: %s , Task: %s, Exit Code: %s, OUTPUT : %s" % (self.task, self.obs, task_return_code, task_output))
+            logger.debug(
+                "Task.finalize : Task Succeeded : Obsnum: %s , Task: %s, Exit Code: %s, OUTPUT : %s"
+                % (self.task, self.obs, task_return_code, task_output))
             self.record_completion()
         return
 
@@ -157,10 +180,14 @@ class Task:
         if self.sg.cluster_scheduler == 1:
             import drmaa
             self.ts.drmaa_session.control(self.jid, drmaa.JobControlAction.TERMINATE)
-            logger.debug('Task.kill Trying to kill: ({task},{obsnum}) pid={pid}'.format(task=self.task, obsnum=self.obs, pid=self.jid))
+            logger.debug(
+                'Task.kill Trying to kill: ({task},{obsnum}) pid={pid}'.format(
+                    task=self.task, obsnum=self.obs, pid=self.jid))
         else:
             if self.process.pid:
-                logger.debug('Task.kill Trying to kill: ({task},{obsnum}) pid={pid}'.format(task=self.task, obsnum=self.obs, pid=self.process.pid))
+                logger.debug(
+                    'Task.kill Trying to kill: ({task},{obsnum}) pid={pid}'.format(
+                        task=self.task, obsnum=self.obs, pid=self.process.pid))
 
                 for child in self.process.children(recursive=True):
                     child.kill()
@@ -174,6 +201,24 @@ class Task:
         else:
             self.dbi.set_obs_pid(self.obs, self.process.pid)
 
+        # log to M&C
+        if self.ts.wf.log_to_mc:
+            try:
+                from hera_mc.mc_session import add_rtp_process_event
+            except ImportError:
+                return
+
+            try:
+                t = atime.Time.now()
+                add_rtp_process_event(t, self.obs, "started")
+            except:
+                # save to disk to read later
+                gps_sec = math.floor(t.gps)
+                info_dict = {"time": t, "obsid": self.obs, "event": "started"}
+                filename = "pe_{0}_{1}.pkl".format(self.obs, str(int(gps_sec)))
+                with open(filename, 'w') as f:
+                    pickle.dump(info_dict, f)
+
     def record_failure(self, failure_type="FAILED"):
         for task in self.ts.active_tasks:
             if task.obs == self.obs:
@@ -183,10 +228,90 @@ class Task:
         self.dbi.update_obs_current_stage(self.obs, failure_type)
         logger.error("Task.record_failure: Task: %s, Obsnum: %s, Type: %s" % (self.task, self.obs, failure_type))
 
+        # log to M&C
+        if self.ts.wf.log_to_mc:
+            try:
+                from hera_mc.mc_session import add_rtp_process_event
+            except ImportError:
+                return
+
+            try:
+                t = atime.Time.now()
+                add_rtp_process_event(t, self.obs, "error")
+            except:
+                # save to disk to read in later
+                gps_sec = math.floor(t.gps)
+                info_dict = {"time": t, "obsid": self.obs, "event": "error"}
+                filename = "pe_{0}_{1}.pkl".format(self.obs, str(int(gps_sec)))
+                with open(filename, 'w') as f:
+                    pickle.dump(info_dict, f)
+
+            return
+
     def record_completion(self):
         self.dbi.set_obs_status(self.obs, self.task)
         self.dbi.set_obs_pid(self.obs, 0)
         self.remove_file_if_exists(self.stdout_stderr_file)
+
+        # log to M&C
+        if self.ts.wf.log_to_mc:
+            try:
+                from hera_mc.mc_session import add_rtp_process_event
+            except ImportError:
+                return
+
+            try:
+                t = atime.Time.now()
+                add_rtp_process_event(t, self.obs, "finished")
+            except:
+                # save to disk to read later
+                gps_sec = math.floor(t.gps)
+                info_dict = {"time": t, "obsid": self.obs, "event": "started"}
+                filename = "pe_{0}_{1}.pkl".format(self.obs, str(int(gps_sec)))
+                with open(filename, 'w') as f:
+                    pickle.dump(info_dict, f)
+
+            # also log a Process Record
+            from hera_mc.mc_session import add_rtp_process_record
+
+            try:
+                # get git versions for relevant packages
+                import rtp.version
+                import hera_qm.version
+                import hera_cal.version
+                import pyuvdata.version
+
+                rtp_info = rtp.version.construct_version_info()
+                hera_qm_info = hera_qm.version.contruct_version_info()
+                hera_cal_info = hera_cal.version.construct_version_info()
+                pyuvdata_info = pyuvdata.version.construct_version_info()
+
+                rtp_version = rtp_info['version']
+                rtp_hash = rtp_info['git_hash']
+                hera_qm_version = hera_qm_info['version']
+                hera_qm_hash = hera_qm_info['git_hash']
+                hera_cal_version = hera_cal_info['version']
+                hera_cal_hash = hera_cal_info['git_hash']
+                pyuvdata_version = pyuvdata_info['version']
+                pyuvdata_hash = pyuvdata_hash['version']
+
+                # get list of tasks
+                all_actions = self.ts.wf.workflow_actions + self.ts.wf.workflow_actions_endfile
+                pipline_list = ','.join([all_actions])
+
+                # save it all to the M&C database
+                add_rtp_process_record(t, self.obs, pipeline_list, rtp_version, rtp_hash, hera_qm_version,
+                                       hera_qm_hash, hera_cal_version, hera_cal_hash, pyuvdata_version, pyuvdata_hash)
+            except:
+                # save to disk to read later
+                gps_sec = math.floor(t.gps)
+                info_dict = {"time": t, "obsid": self.obs, "pipeline_list": pipeline_list, "rtp_git_version": rtp_version,
+                             "rtp_git_hash": rtp_hash, "hera_qm_git_version": hera_qm_version, "hera_qm_git_hash": hera_qm_hash,
+                             "hera_cal_git_version": hera_cal_version, "hera_cal_git_hash": hera_cal_hash,
+                             "pyuvdata_git_version": pyuvdata_version, "pyuvdata_git_hash": pyuvdata_hash}
+                filename = "pr_{0}_{1}.pkl".format(self.obs, str(int(gps_sec)))
+                with open(filename, 'w') as f:
+                    pickle.dump(info_dict, f)
 
 
 class TaskClient:
@@ -238,7 +363,9 @@ class TaskClient:
                                             'drmaa_args': drmaa_args_string,
                                             'drmaa_queue': drmaa_queue,
                                             'env_vars': pickled_env_vars})
-            logger.debug('TaskClient.transmit: sending (%s,%s) with args=%s drmaa_args=%s' % (task, obs, args_string, drmaa_args_string))
+            logger.debug(
+                'TaskClient.transmit: sending (%s,%s) with args=%s drmaa_args=%s'
+                % (task, obs, args_string, drmaa_args_string))
 
         elif action_type == "KILL_TASK":
             conn_type = "GET"
@@ -255,14 +382,17 @@ class TaskClient:
             response_reason = response.reason
             response_data = response.read()
         except:
-            logger.exception("Could not connect to server %s on port : %s, marking OFFLINE" % (self.host_port[0], self.host_port[1]))
-            self.dbi.mark_still_offline(self.host_port[0])  # If we can't connect to the taskmanager just mark it as offline
+            logger.exception("Could not connect to server %s on port : %s, marking OFFLINE"
+                             % (self.host_port[0], self.host_port[1]))
+            # If we can't connect to the taskmanager just mark it as offline
+            self.dbi.mark_still_offline(self.host_port[0])
         finally:
             conn.close()
 
         if response_status != 200:  # Check if we did not recieve 200 OK
             self.error_count += 1
-            logger.debug("Problem connecting to host : %s  has error count :%s" % (self.host_port[0], self.error_count))
+            logger.debug("Problem connecting to host : %s  has error count :%s"
+                         % (self.host_port[0], self.error_count))
             status = "FAILED_TO_CONNECT"
         else:
             status = "OK"
@@ -342,8 +472,11 @@ class TaskHandler(BaseHTTPRequestHandler):
                     child_proc = mytask.process.children()[0]
                     if psutil.pid_exists(child_proc.pid):
                         task_info_dict.append({'obsnum': mytask.obs, 'task': mytask.task, 'pid': child_proc.pid,
-                                               'cpu_percent': child_proc.cpu_percent(interval=1.0), 'mem_used': child_proc.memory_info_ex()[0],
-                                               'cpu_time': child_proc.cpu_times()[0], 'start_time': child_proc.create_time(), 'proc_status': child_proc.status()})
+                                               'cpu_percent': child_proc.cpu_percent(interval=1.0),
+                                               'mem_used': child_proc.memory_info_ex()[0],
+                                               'cpu_time': child_proc.cpu_times()[0],
+                                               'start_time': child_proc.create_time(),
+                                               'proc_status': child_proc.status()})
                 except:
                     logger.exception("do_GET : Trying to send response to INFO request")
             pickled_task_info_dict = pickle.dumps(task_info_dict)
@@ -354,35 +487,45 @@ class TaskHandler(BaseHTTPRequestHandler):
     def do_POST(self):
         task_already_exists = False
 
-        form = cgi.FieldStorage(fp=self.rfile, headers=self.headers, environ={'REQUEST_METHOD': 'POST', 'CONTENT_TYPE': self.headers['Content-Type']})
+        form = cgi.FieldStorage(fp=self.rfile, headers=self.headers,
+                                environ={'REQUEST_METHOD': 'POST',
+                                         'CONTENT_TYPE': self.headers['Content-Type']})
 
         self.send_response(200)  # Return a response of 200, OK to the client
         self.end_headers()
 
-        if upper(self.path) == "/NEW_TASK":                # New task recieved, grab the relavent bits out of the POST
+        if upper(self.path) == "/NEW_TASK":
+            # New task recieved, grab the relavent bits out of the POST
             task = form.getfirst("task", "")
             obsnum = str(form.getfirst("obsnum", ""))
             still = form.getfirst("still", "")
             args = form.getfirst("args", "").split(' ')
             drmaa_args = form.getfirst("drmaa_args", "")  # .split(' ')
             drmaa_queue = form.getfirst("drmaa_queue", "")
-            pickled_env_vars = form.getfirst("env_vars", "")  # Will be coming in pickled, might want to do the same for args
-            env_vars = pickle.loads(pickled_env_vars)  # depickled env_vars, should now be a dict
+            # Will be coming in pickled, might want to do the same for args
+            pickled_env_vars = form.getfirst("env_vars", "")
+            # depickled env_vars, should now be a dict
+            env_vars = pickle.loads(pickled_env_vars)
 
-            logger.info('TaskHandler.handle: received (%s,%s) with args=%s' % (task, obsnum, ' '.join(args)))  # , ' '.join(env_vars)))
+            logger.info('TaskHandler.handle: received (%s,%s) with args=%s' % (task, obsnum, ' '.join(args)))
 
         if task == 'COMPLETE':
             self.server.dbi.set_obs_status(obsnum, task)
         else:
             for active_task in self.server.active_tasks:
                 logger.debug("  Active Task: %s, For Obs: %s" % (active_task.task, active_task.obs))
-                if active_task.task == task and active_task.obs == obsnum:  # We now check to see if the task is already in the list before we go crazy and try to run a second copy
-                    logger.debug("We are currently running this task already. Task: %s , Obs: %s" % (active_task.task, active_task.obs))
+                if active_task.task == task and active_task.obs == obsnum:
+                    # We now check to see if the task is already in the list before we go crazy
+                    #   and try to run a second copy
+                    logger.debug("We are currently running this task already. Task: %s , Obs: %s"
+                                 % (active_task.task, active_task.obs))
                     task_already_exists = True
                     break
 
             if task_already_exists is False:
-                t = Task(task, obsnum, still, args, drmaa_args, drmaa_queue, self.server.dbi, self.server, self.server.data_dir, self.server.path_to_do_scripts, custom_env_vars=env_vars)
+                t = Task(task, obsnum, still, args, drmaa_args, drmaa_queue, self.server.dbi,
+                         self.server, self.server.data_dir, self.server.path_to_do_scripts,
+                         custom_env_vars=env_vars)
                 self.server.append_task(t)
                 t.run()
         return
@@ -391,11 +534,13 @@ class TaskHandler(BaseHTTPRequestHandler):
 class TaskServer(HTTPServer):
     allow_reuse_address = True
 
-    def __init__(self, dbi, sg, data_dir='.', port=14204, handler=TaskHandler, path_to_do_scripts=".", drmaa_shared='/shared'):
+    def __init__(self, dbi, sg, data_dir='.', port=14204, handler=TaskHandler,
+                 path_to_do_scripts=".", drmaa_shared='/shared', workflow=None):
         global logger
         logger = sg.logger
         self.myhostname = socket.gethostname()
-        self.httpd = HTTPServer.__init__(self, (self.myhostname, port), handler)  # Class us into HTTPServer so we can make calls from TaskHandler into this class via self.server.
+        # Class us into HTTPServer so we can make calls from TaskHandler into this class via self.server.
+        self.httpd = HTTPServer.__init__(self, (self.myhostname, port), handler)
         self.active_tasks_semaphore = threading.Semaphore()
         self.active_tasks = []
         self.dbi = dbi
@@ -409,16 +554,19 @@ class TaskServer(HTTPServer):
         self.drmaa_session = ''
         self.drmaa_shared = drmaa_shared
         self.shutting_down = False
+        self.wf = workflow
 
         # signal.signal(signal.SIGINT, self.signal_handler)  # Enabled clean shutdown after Cntrl-C event.
 
     def append_task(self, t):
-        self.active_tasks_semaphore.acquire()  # Jon : Not sure why we're doing this, we only have one primary thread
+        # Jon : Not sure why we're doing this, we only have one primary thread
+        self.active_tasks_semaphore.acquire()
         self.active_tasks.append(t)
         self.active_tasks_semaphore.release()
 
     def poll_task_status(self, task):
-        if self.sg.cluster_scheduler == 1:  # Do we need to interface with a cluster scheduler?
+        # Do we need to interface with a cluster scheduler?
+        if self.sg.cluster_scheduler == 1:
             try:
                 task_info = self.drmaa_session.jobStatus(task.jid)
             except:
@@ -428,10 +576,12 @@ class TaskServer(HTTPServer):
                 poll_status = True
             else:
                 poll_status = None
-            # attributes: retval. :  jobId, hasExited, hasSignal, terminatedSignal, hasCoreDump, wasAborted, exitStatus, and resourceUsage
+            # attributes: retval. :  jobId, hasExited, hasSignal, terminatedSignal, hasCoreDump,
+            #                        wasAborted, exitStatus, and resourceUsage
         else:
             try:
-                poll_status = task.process.poll()  # race condition due to threading, might fix later, pretty rare
+                # race condition due to threading, might fix later, pretty rare
+                poll_status = task.process.poll()
             except:
                 poll_status = None
                 time.sleep(2)
@@ -447,7 +597,8 @@ class TaskServer(HTTPServer):
             new_active_tasks = []
             for mytask in self.active_tasks:
                 if self.poll_task_status(mytask) is None:
-                    new_active_tasks.append(mytask)   # This should probably be handled in a better way
+                    # This should probably be handled in a better way
+                    new_active_tasks.append(mytask)
                 else:
                     mytask.finalize()
             self.active_tasks = new_active_tasks
@@ -461,8 +612,10 @@ class TaskServer(HTTPServer):
                     try:
                         child_proc = mytask.process.children()[0]
                         if psutil.pid_exists(child_proc.pid):
-                            logger.debug('Proc info on {obsnum}:{task}:{pid} - cpu={cpu:.1f}%, mem={mem:.1f}%, Naffinity={aff}'.format(
-                                obsnum=mytask.obs, task=mytask.task, pid=child_proc.pid, cpu=child_proc.cpu_percent(interval=1.0),
+                            logger.debug('Proc info on {obsnum}:{task}:{pid} - cpu={cpu:.1f}%,'
+                                         ' mem={mem:.1f}%, Naffinity={aff}'.format(
+                                obsnum=mytask.obs, task=mytask.task, pid=child_proc.pid,
+                                             cpu=child_proc.cpu_percent(interval=1.0),
                                 mem=child_proc.memory_percent(), aff=len(child_proc.cpu_affinity())))
                     except:
                         pass
@@ -500,11 +653,58 @@ class TaskServer(HTTPServer):
         # Just a timer that will update that its last_checkin time in the database every 5min
         #
         while self.keep_running is True:
+            # get last check-in time before updating
             hostname = socket.gethostname()
+            s = self.dbi.Session()
+            # check that it exists in the db
+            if s.query(Still).filter(Still.hostname == hostname).count() > 0:
+                still = s.query(Still).filter(Still.hostname == hostname).one()
+                last_checkin = still.last_checkin
+                # calculate minutes since then
+                # use datetime for self-consistency...
+                now = datetime.datetime.now()
+                deltat_check = now - last_checkin
+                deltat_check_min = deltat_check.total_seconds() / 60
+            else:
+                deltat_check_min = 0.
+
+            # continue with checkin
             ip_addr = socket.gethostbyname(hostname)
             cpu_usage = os.getloadavg()[1]#using the 5 min load avg
-            self.dbi.still_checkin(hostname, ip_addr, self.port, int(cpu_usage), self.data_dir, status="OK", max_tasks=self.sg.actions_per_still, cur_tasks=len(self.active_tasks))
+            ntasks = len(self.active_tasks)
+            self.dbi.still_checkin(hostname, ip_addr, self.port, int(cpu_usage), self.data_dir,
+                                   status="OK", max_tasks=self.sg.actions_per_still, cur_tasks=ntasks)
             time.sleep(10)
+
+            if self.wf.log_to_mc:
+                from hera_mc.mc_session import MCSession
+                from hera_mc.mc_session import add_rtp_status
+
+                # get rest of info
+                t = atime.Time.now()
+                ncpu = psutil.cpu_count()
+                status = still.status
+
+                vmem = psutil.virtual_memory()
+                # convert to GiB
+                vmem_tot = vmem.total / 1024 / 1024 / 1024
+                vmem_pct = vmem.percent
+
+                du = psutil.disk_usage('/')
+                du_tot = du.total / 1024 / 1024 / 1024
+                du_pct = du.percent
+
+                boot_time = psutil.boot_time()
+                deltat_boot = now - boot_time
+                deltat_boot_hr = deltat_boot.total_seconds() / 60 / 60
+
+                # actually add to general MCSession and RTPStatus
+                mcs = MCSession()
+                mcs.add_server_status('rtp', hostname, ip_addr, t, ncpu, cpu_usage, vmem_pct,
+                                      vmem_tot, du_pct, du_tot)
+
+                add_rtp_status(t, status, deltat_check_min, ntasks, deltat_boot_hr)
+
         return 0
 
     def start(self):
@@ -536,13 +736,16 @@ class TaskServer(HTTPServer):
         return
 
     def shutdown(self):
-        if self.shutting_down is False:  # check to see if we're already shutting down so we don't step over multiple threads attempting this.
+        if self.shutting_down is False:
+            # check to see if we're already shutting down so we don't step
+            #    over multiple threads attempting this
             self.shutting_down = True
             logger.debug("Shutting down task_server")
             hostname = socket.gethostname()
             ip_addr = socket.gethostbyname(hostname)
             cpu_usage = psutil.cpu_percent()
-            self.dbi.still_checkin(hostname, ip_addr, self.port, int(cpu_usage), self.data_dir, status="OFFLINE")
+            self.dbi.still_checkin(hostname, ip_addr, self.port, int(cpu_usage), self.data_dir,
+                                   status="OFFLINE")
             self.keep_running = False
             parentproc = psutil.Process()
             myprocs = parentproc.children(recursive=True)
