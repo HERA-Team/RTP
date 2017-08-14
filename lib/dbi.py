@@ -1,10 +1,12 @@
 import os
 import sys
 import logging
-# import hashlib
 import psutil
 import datetime
 import numpy as np
+import math
+import astropy.time as atime
+import pickle
 from contextlib import contextmanager
 
 # from subprocess import Popen, PIPE
@@ -160,17 +162,24 @@ class DataBaseInterface(object):
         """
 
         if test:
-            self.engine = create_engine('sqlite:///', connect_args={'check_same_thread': False}, poolclass=StaticPool)
+            self.engine = create_engine('sqlite:///',
+                                        connect_args={'check_same_thread': False},
+                                        poolclass=StaticPool)
             self.createdb()
         elif dbtype == 'postgresql':
             try:
-                self.engine = create_engine('postgresql+psycopg2://{0}:{1}@{2}:{3}/{4}'.format(dbuser, dbpasswd, dbhost, dbport, dbname), echo=False, pool_size=20, max_overflow=100)  # Set echo=True to Enable debug mode
+                # Set echo=True to Enable debug mode
+                self.engine = create_engine('postgresql+psycopg2://{0}:{1}@{2}:{3}/{4}'.
+                                            format(dbuser, dbpasswd, dbhost, dbport, dbname),
+                                            echo=False, pool_size=20, max_overflow=100)
             except:
                 logger.exception("Could not connect to the postgresql database.")
                 sys.exit(1)
         elif dbtype == 'mysql':
             try:
-                self.engine = create_engine('mysql+pymysql://{0}:{1}@{2}:{3}/{4}'.format(dbuser, dbpasswd, dbhost, dbport, dbname), pool_size=20, max_overflow=40, echo=False)
+                self.engine = create_engine('mysql+pymysql://{0}:{1}@{2}:{3}/{4}'.
+                                            format(dbuser, dbpasswd, dbhost, dbport, dbname),
+                                            pool_size=20, max_overflow=40, echo=False)
             except:
                 logger.exception("Could not connect to the mysql database.")
                 sys.exit(1)
@@ -228,8 +237,10 @@ class DataBaseInterface(object):
         s = self.Session()
         try:
             obsnums = [obs.obsnum for obs in s.query(Observation).
-                       filter((Observation.current_stage_in_progress != 'FAILED') | (Observation.current_stage_in_progress.is_(None))).
-                       filter((Observation.current_stage_in_progress != 'KILLED') | (Observation.current_stage_in_progress.is_(None))).
+                       filter((Observation.current_stage_in_progress != 'FAILED')
+                              | (Observation.current_stage_in_progress.is_(None))).
+                       filter((Observation.current_stage_in_progress != 'KILLED')
+                              | (Observation.current_stage_in_progress.is_(None))).
                        filter(Observation.status != 'NEW').
                        filter(Observation.status != 'COMPLETE').all()]
 
@@ -253,8 +264,10 @@ class DataBaseInterface(object):
         s = self.Session()
         try:
             obsnums = [obs.obsnum for obs in s.query(Observation).
-                       filter((Observation.current_stage_in_progress != 'FAILED') | (Observation.current_stage_in_progress.is_(None))).
-                       filter((Observation.current_stage_in_progress != 'KILLED') | (Observation.current_stage_in_progress.is_(None))).
+                       filter((Observation.current_stage_in_progress != 'FAILED')
+                              | (Observation.current_stage_in_progress.is_(None))).
+                       filter((Observation.current_stage_in_progress != 'KILLED')
+                              | (Observation.current_stage_in_progress.is_(None))).
                        filter(Observation.status != 'NEW').
                        filter(Observation.status != 'COMPLETE').
                        filter(Observation.stillhost == tm_hostname).all()]
@@ -302,7 +315,8 @@ class DataBaseInterface(object):
         add a log entry about an obsnum, appears to only be run when a task is first started
         """
         current_datetime = datetime.datetime.now()
-        LOG = Log(obsnum=obsnum, stage=status, logtext=logtext, exit_status=exit_status, start_time=current_datetime)
+        LOG = Log(obsnum=obsnum, stage=status, logtext=logtext, exit_status=exit_status,
+                  start_time=current_datetime)
         s = self.Session()
         s.add(LOG)
         s.commit()
@@ -356,7 +370,8 @@ class DataBaseInterface(object):
         """
         s = self.Session()
         FAILED_LOG_COUNT_Q = s.query(Log.obsnum,
-                                     func.count('*').label('cnt')).filter(Log.exit_status != 0).group_by(Log.obsnum).subquery()
+                                     func.count('*').label('cnt')).filter(Log.exit_status != 0).group_by(
+                                         Log.obsnum).subquery()
         FAILED_LOGS = s.query(FAILED_LOG_COUNT_Q).filter(FAILED_LOG_COUNT_Q.c.cnt >= nfail)
         FAILED_OBSNUMS = map(int, [FAILED_LOG.obsnum for FAILED_LOG in FAILED_LOGS])
         s.close()
@@ -369,21 +384,45 @@ class DataBaseInterface(object):
         returns: obsnum  (see jdpol2obsnum)
         Note: does not link up neighbors!
         """
-        OBS = Observation(obsnum=obsnum, date=date, date_type=date_type, pol=pol, status=status, outputhost=outputhost, length=length)
+        OBS = Observation(obsnum=obsnum, date=date, date_type=date_type, pol=pol,
+                          status=status, outputhost=outputhost, length=length)
         s = self.Session()
         s.add(OBS)
         s.commit()
         obsnum = OBS.obsnum
         s.close()
         self.add_file(obsnum, host, filename, path_prefix=path_prefix)
-        return obsnum
+
+        # add to m&c
+        try:
+            from hera_mc.mc_session import add_rtp_process_event
+        except ImportError:
+            return obsnum
+
+        try:
+            t = atime.Time.now()
+            add_rtp_process_event(t, obsnum, 'queued')
+            return obsnum
+        except:
+            # PCL: this should not be a blanket 'except', but should be specific to
+            #      a "could not connect to db" exception
+
+            # want to save to disk for later import
+            gps_sec = math.floor(t.gps)
+            info_dict = {"time": t, "obsid": obsnum, "event": "queued"}
+            filname = "{0}_{1}.pkl".format(obsnum, str(int(gps_sec)))
+            with open(filename, 'w') as f:
+                pickle.dump(info_dict, f)
+
+            return obsnum
 
     def add_file(self, obsnum, host, filename, path_prefix=None):
         """
         Add a file to the database and associate it with an observation.
         """
         if path_prefix is not None and not filename.startswith (path_prefix):
-            raise Exception ('if using path_prefix, filename must start with it; got %s, %s' % (path_prefix, filename))
+            raise Exception ('if using path_prefix, filename must start with it; got %s, %s'
+                             % (path_prefix, filename))
 
         FILE = File(filename=filename, host=host, path_prefix=(path_prefix or ''))
         # get the observation corresponding to this file

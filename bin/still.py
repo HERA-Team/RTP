@@ -73,6 +73,7 @@ class SpawnerClass:
         self.ip_addr = ''
         self.cluster_scheduler = 0
         self.drmaa_shared = '/shared'
+        self.log_to_mc = 0
 
     def preflight_check_scheduler(self):
         # Nothing to do here at the moment, just a place holder
@@ -199,10 +200,12 @@ def process_client_config_file(sg, wf):
         sg.port = int(get_config_entry(config, 'Still', 'port', reqd=False, remove_spaces=True))
         sg.ip_addr = get_config_entry(config, 'Still', 'ip_addr', reqd=False, remove_spaces=True)
         sg.data_dir = get_config_entry(config, 'Still', 'data_dir', reqd=False, remove_spaces=False)
-        sg.path_to_do_scripts = get_config_entry(config, 'Still', 'path_to_do_scripts', reqd=False, remove_spaces=False, default_val=basedir + 'scripts/')
+        sg.path_to_do_scripts = get_config_entry(config, 'Still', 'path_to_do_scripts', reqd=False,
+                                                 remove_spaces=False, default_val=basedir + 'scripts/')
         sg.timeout = int(get_config_entry(config, 'Still', 'timeout', reqd=False, remove_spaces=True))
         sg.block_size = int(get_config_entry(config, 'Still', 'block_size', reqd=False, remove_spaces=True))
-        sg.actions_per_still = int(get_config_entry(config, 'Still', 'actions_per_still', reqd=False, remove_spaces=True, default_val=8))
+        sg.actions_per_still = int(get_config_entry(config, 'Still', 'actions_per_still', reqd=False,
+                                                    remove_spaces=True, default_val=8))
         sg.sleep_time = int(get_config_entry(config, 'Still', 'sleep_time', reqd=False, remove_spaces=True))
         sg.cluster_scheduler = int(get_config_entry(config, 'Still', 'cluster_scheduler', reqd=False, remove_spaces=True))
         sg.drmaa_shared = get_config_entry(config, 'Still', 'drmaa_shared', reqd=False, remove_spaces=True)
@@ -213,27 +216,40 @@ def process_client_config_file(sg, wf):
 
         # Read in all the workflow information
         wf.workflow_actions = tuple(get_config_entry(config, 'WorkFlow', 'actions', reqd=True, remove_spaces=True).split(","))
-        wf.workflow_actions_endfile = tuple(get_config_entry(config, 'WorkFlow', 'actions_endfile', reqd=False, remove_spaces=True).split(","))
-        wf.prioritize_obs = int(get_config_entry(config, 'WorkFlow', 'prioritize_obs', reqd=False, remove_spaces=True, default_val=0))
-        wf.still_locked_after = get_config_entry(config, 'WorkFlow', 'still_locked_after', reqd=False, remove_spaces=True)  # Do I still use this?
+        wf.workflow_actions_endfile = tuple(get_config_entry(config, 'WorkFlow', 'actions_endfile',
+                                                             reqd=False, remove_spaces=True).split(","))
+        wf.prioritize_obs = int(get_config_entry(config, 'WorkFlow', 'prioritize_obs', reqd=False,
+                                                 remove_spaces=True, default_val=0))
+        # Do I still use this?
+        wf.still_locked_after = get_config_entry(config, 'WorkFlow', 'still_locked_after', reqd=False,
+                                                 remove_spaces=True)
         wf.default_drmaa_queue = get_config_entry(config, 'WorkFlow', 'default_drmaa_queue', reqd=False, remove_spaces=True)
         wf.neighbors = int(get_config_entry(config, 'WorkFlow', 'neighbors', reqd=False, remove_spaces=False, default_val=0))
-        wf.pol_neighbors = int(get_config_entry(config, 'WorkFlow', 'pol_neighbors', reqd=False, remove_spaces=False, default_val=0))
-        wf.lock_all_neighbors_to_same_still = int(get_config_entry(config, 'WorkFlow', 'lock_all_neighbors_to_same_still', reqd=False, remove_spaces=False, default_val=0))
+        wf.pol_neighbors = int(get_config_entry(config, 'WorkFlow', 'pol_neighbors', reqd=False, remove_spaces=False,
+                                                default_val=0))
+        wf.lock_all_neighbors_to_same_still = int(get_config_entry(config, 'WorkFlow', 'lock_all_neighbors_to_same_still',
+                                                                   reqd=False, remove_spaces=False, default_val=0))
+        wf.log_to_mc = int(get_config_entry(config, 'WorkFlow', 'log_to_mc', reqd=False, remove_spaces=False, default_val=0))
 
-        for action in wf.workflow_actions or wf.workflow_actions_endfile:      # Collect all the prereqs and arg strings for any action of the workflow and throw them into a dict of keys and lists
-            wf.action_args[action] = '[\'%s:%s/%s\' % (pot, path, basename)]'  # Put in a default host:path/filename for each actions arguements that get passed to do_ scripts
+        # Collect all the prereqs and arg strings for any action of the workflow
+        #    and throw them into a dict of keys and lists
+        for action in wf.workflow_actions or wf.workflow_actions_endfile:
+            # Put in a default host:path/filename for each actions arguements that get passed to do_ scripts
+            wf.action_args[action] = '[\'%s:%s/%s\' % (pot, path, basename)]'
 
             if action in config_sections:
-                wf.action_prereqs[action] = get_config_entry(config, action, 'prereqs', reqd=False, remove_spaces=True).split(",")
+                wf.action_prereqs[action] = get_config_entry(config, action, 'prereqs', reqd=False,
+                                                             remove_spaces=True).split(",")
                 wf.action_args[action] = get_config_entry(config, action, 'args', reqd=False, remove_spaces=False)
                 wf.drmaa_args[action] = get_config_entry(config, action, 'drmaa_args', reqd=False, remove_spaces=False)
-                wf.drmaa_queue_by_task[action] = get_config_entry(config, action, 'drmaa_queue', reqd=False, remove_spaces=False)
+                wf.drmaa_queue_by_task[action] = get_config_entry(config, action, 'drmaa_queue', reqd=False,
+                                                                  remove_spaces=False)
     else:
         print("Config file does not appear to exist : %s") % sg.config_file
         sys.exit(1)
 
-    if sg.check_path("Logging", sg.log_path) != 0:  # Check logging path exists and is writeable
+    # Check logging path exists and is writeable
+    if sg.check_path("Logging", sg.log_path) != 0:
         sys.exit(1)
 
     return 0
@@ -296,7 +312,9 @@ def start_server(sg, wf, args):
     sg.logger = setup_logger("TS", "DEBUG", sg.log_path)
     sg.preflight_check_ts(wf)
 
-    task_server = TaskServer(sg.dbi, sg, data_dir=mydata_dir, port=my_port, path_to_do_scripts=sg.path_to_do_scripts, drmaa_shared=sg.drmaa_shared)
+    task_server = TaskServer(sg.dbi, sg, data_dir=mydata_dir, port=my_port,
+                             path_to_do_scripts=sg.path_to_do_scripts,
+                             drmaa_shared=sg.drmaa_shared, workflow=wf)
     task_server.start()
     return
 
