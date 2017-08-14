@@ -25,6 +25,7 @@ except:
 logger = logging.getLogger('librarian')
 Base = declarative_base()
 
+
 def decimal_default(obj):
     '''
     fixes decimal issue with json module
@@ -40,6 +41,7 @@ def decimal_default(obj):
     if isinstance(obj, decimal.Decimal):
         return float(obj)
 
+
 class DictFix(object):
     '''
     superclass for all SQLAlchemy Table objects
@@ -49,6 +51,7 @@ class DictFix(object):
     -------
     to_dict | creates python dict of fields from sqlalchemy object
     '''
+
     def to_dict(self):
         '''
         convert object to dict
@@ -58,26 +61,31 @@ class DictFix(object):
         dict: table attributes
         '''
         try:
-            new_dict = {column.name: getattr(self, column.name) for column in self.__table__.columns}
+            new_dict = {column.name: getattr(
+                self, column.name) for column in self.__table__.columns}
             return new_dict
         except(exc.InvalidRequestError):
             return None
 
 
-#class Neighbors(dbi.neighbors, DictFix):
+# class Neighbors(dbi.neighbors, DictFix):
 #    pass
 
 class Observation_(dbi.Observation, DictFix):
     pass
 
+
 class File_(dbi.File, DictFix):
     pass
+
 
 class Log_(dbi.Log, DictFix):
     pass
 
+
 class Still_(dbi.Still, DictFix):
     pass
+
 
 class DataBaseInterface(object):
     '''
@@ -95,6 +103,7 @@ class DataBaseInterface(object):
     set_entry | updates database entry field with new value
     set_entry_dict | updates database entry fields with new values using input dict
     '''
+
     def __init__(self, configfile='~/still_shredder.cfg'):
         '''
         Connect to the database and make a session creator
@@ -115,17 +124,21 @@ class DataBaseInterface(object):
                 except:
                     self.dbinfo = config['dbinfo']
                 try:
-                    self.dbinfo['dbpasswd'] = self.dbinfo['dbpasswd'].decode('string-escape')
+                    self.dbinfo['dbpasswd'] = self.dbinfo[
+                        'dbpasswd'].decode('string-escape')
                 except:
-                    self.dbinfo['dbpasswd'] = bytes(self.dbinfo['dbpasswd'], 'ascii').decode('unicode_escape')
+                    self.dbinfo['dbpasswd'] = bytes(
+                        self.dbinfo['dbpasswd'], 'ascii').decode('unicode_escape')
             else:
                 logging.info(' '.join((configfile, 'Not Found')))
         try:
             connect_string = 'mysql://{dbuser}:{dbpasswd}@{dbhost}:{dbport}/{dbname}'
-            self.engine = create_engine(connect_string.format(**self.dbinfo), pool_size=20, max_overflow=40)
+            self.engine = create_engine(connect_string.format(
+                **self.dbinfo), pool_size=20, max_overflow=40)
         except:
             connect_string = 'mysql+mysqldb://{dbuser}:{dbpasswd}@{dbhost}:{dbport}/{dbname}'
-            self.engine = create_engine(connect_string.format(**self.dbinfo), pool_size=20, max_overflow=40)
+            self.engine = create_engine(connect_string.format(
+                **self.dbinfo), pool_size=20, max_overflow=40)
 
         self.Session = sessionmaker(bind=self.engine)
 

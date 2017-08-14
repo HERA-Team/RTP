@@ -2,6 +2,7 @@ import os
 import subprocess
 import json
 
+
 def construct_version_info():
     rtp_dir = os.path.dirname(os.path.realpath(__file__))
     version_file = os.path.join(rtp_dir, 'VERSION')
@@ -26,7 +27,8 @@ def construct_version_info():
             # Check if a GIT_INFO file was created when installing package
             git_file = os.path.join(rtp_dir, 'GIT_INFO')
             with open(git_file) as data_file:
-                data = [x.encode('UTF8') for x in json.loads(data_file.read().strip())]
+                data = [x.encode('UTF8')
+                        for x in json.loads(data_file.read().strip())]
                 git_origin = data[0]
                 git_hash = data[1]
                 git_description = data[2]

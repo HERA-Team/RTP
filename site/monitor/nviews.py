@@ -34,10 +34,11 @@ from flask_app import monitor_app as app
 import datetime
 import json
 from flask import render_template, flash, redirect, url_for,\
-                  request, g, make_response, Response, jsonify
+    request, g, make_response, Response, jsonify
 from sqlalchemy import func
 import rdbi
 import misc_utils
+
 
 def db_objs():
     '''
@@ -58,6 +59,7 @@ def db_objs():
 
     return dbi, obs_table, file_table, log_table
 
+
 @app.route('/', methods=['GET', 'POST'])
 @app.route('/index', methods=['GET', 'POST'])
 def index():
@@ -71,12 +73,13 @@ def index():
     '''
     #dbi, obs_table, file_table, log_table = db_objs()
 
-    #with dbi.session_scope() as s:
+    # with dbi.session_scope() as s:
     #    pass
 
     return render_template('index.html')
 
-@app.route('/obs_hist', methods = ['POST'])
+
+@app.route('/obs_hist', methods=['POST'])
 def obs_hist():
     '''
     generate histogram for data
@@ -89,23 +92,27 @@ def obs_hist():
 
     with dbi.session_scope() as s:
         all_query = s.query(obs_table, func.count(obs_table))\
-                      .group_by(func.substr(obs_table.date, 1, 7))
-        all_query = tuple((int(float(q.date)), count) for q, count in all_query.all())
+            .group_by(func.substr(obs_table.date, 1, 7))
+        all_query = tuple((int(float(q.date)), count)
+                          for q, count in all_query.all())
         all_days, all_counts = zip(*all_query)
 
         obs_query = s.query(obs_table, func.count(obs_table))\
                      .filter(obs_table.status == 'COMPLETE')\
                      .group_by(func.substr(obs_table.date, 1, 7))
-        obs_query = ((int(float(q.date)), count) for q, count in obs_query.all())
-        obs_counts = [count if day in all_days else 0 for day, count in obs_query]
+        obs_query = ((int(float(q.date)), count)
+                     for q, count in obs_query.all())
+        obs_counts = [
+            count if day in all_days else 0 for day, count in obs_query]
         #obs_days, obs_counts = zip(*obs_query)
         obs_days = []
 
     return render_template('obs_hist.html',
-                            obs_days=obs_days, obs_counts=obs_counts,
-                            all_days=all_days, all_counts=all_counts)
+                           obs_days=obs_days, obs_counts=obs_counts,
+                           all_days=all_days, all_counts=all_counts)
 
-@app.route('/prog_hist', methods = ['POST'])
+
+@app.route('/prog_hist', methods=['POST'])
 def prog_hist():
     '''
     generate histogram for data
@@ -116,7 +123,7 @@ def prog_hist():
     '''
     dbi, obs_table, file_table, log_table = db_objs()
 
-    statuses = ('NEW','UV_POT', 'UV_NFS', 'UV', 'UVC', 'CLEAN_UV', 'UVCR', 'CLEAN_UVC',
+    statuses = ('NEW', 'UV_POT', 'UV_NFS', 'UV', 'UVC', 'CLEAN_UV', 'UVCR', 'CLEAN_UVC',
                 'ACQUIRE_NEIGHBORS', 'UVCRE', 'NPZ', 'UVCRR', 'NPZ_POT',
                 'CLEAN_UVCRE', 'UVCRRE', 'CLEAN_UVCRR', 'CLEAN_NPZ',
                 'CLEAN_NEIGHBORS', 'UVCRRE_POT', 'CLEAN_UVCRRE', 'CLEAN_UVCR',
@@ -127,15 +134,18 @@ def prog_hist():
                       .join(obs_table)\
                       .filter(obs_table.status != 'COMPLETE')\
                       .group_by(obs_table.status)
-        file_query = ((q.observation.status, count) for q, count in file_query.all())
+        file_query = ((q.observation.status, count)
+                      for q, count in file_query.all())
         file_status, file_counts = zip(*file_query)
 
-        file_status, file_counts = zip(*sorted(zip(file_status, file_counts), key=lambda x: statuses.index(x[0])))
+        file_status, file_counts = zip(
+            *sorted(zip(file_status, file_counts), key=lambda x: statuses.index(x[0])))
 
     return render_template('prog_hist.html',
-                            file_status=file_status, file_counts=file_counts)
+                           file_status=file_status, file_counts=file_counts)
 
-@app.route('/obs_table', methods = ['POST'])
+
+@app.route('/obs_table', methods=['POST'])
 def obs_table():
     '''
     generate observation table for killed and failed observations
@@ -158,9 +168,11 @@ def obs_table():
         failed_obs = [fo.to_dict() for fo in failed_obs]
         killed_obs = [ko.to_dict() for ko in killed_obs]
 
-    return render_template('obs_table.html', failed_obs=failed_obs, killed_obs=killed_obs)
+    return render_template(
+        'obs_table.html', failed_obs=failed_obs, killed_obs=killed_obs)
 
-@app.route('/alert_log', methods = ['GET', 'POST'])
+
+@app.route('/alert_log', methods=['GET', 'POST'])
 def alert_log():
     '''
     saves file metadata as json
@@ -175,24 +187,26 @@ def alert_log():
     with dbi.session_scope() as s:
         log_query = s.query(log_table).filter(log_table.obsnum == obsnum)
 
-        entry_list = [rtp_log.to_dict() for rtp_log in log_query.order_by(log_table.lognum.asc()).all()]
+        entry_list = [rtp_log.to_dict() for rtp_log in log_query.order_by(
+            log_table.lognum.asc()).all()]
 
     for entry in entry_list:
         for index, log in enumerate(entry['logtext'].strip().split('\n')):
             entry['logtext_{index}'.format(index=index)] = log
         del entry['logtext']
-        
-    log_data =  json.dumps(entry_list, sort_keys=True,
-                           indent=4, default=rdbi.decimal_default)
+
+    log_data = json.dumps(entry_list, sort_keys=True,
+                          indent=4, default=rdbi.decimal_default)
 
     print(log_data)
     return log_data
-    #return Response(response=json.dumps(entry_list, sort_keys=True,
+    # return Response(response=json.dumps(entry_list, sort_keys=True,
     #                indent=4, default=rdbi.decimal_default),
     #                status=200, mimetype='application/json',
-    #                headers={'Content-Disposition': 'attachment; filename=file.json'})
+    # headers={'Content-Disposition': 'attachment; filename=file.json'})
 
-@app.route('/file_table', methods = ['GET', 'POST'])
+
+@app.route('/file_table', methods=['GET', 'POST'])
 def file_table():
     '''
     generate file table for histogram bar
@@ -221,7 +235,8 @@ def file_table():
 
     return render_template('file_table.html', working_FILEs=working_FILEs)
 
-@app.route('/summarize_still', methods = ['GET', 'POST'])
+
+@app.route('/summarize_still', methods=['GET', 'POST'])
 def summarize_still():
     '''
     generate summarize still page
@@ -248,7 +263,7 @@ def summarize_still():
                         .count()
 
         # TABLE #1: small table at top with:
-        #total amount of observations, amount in progress, and amount complete
+        # total amount of observations, amount in progress, and amount complete
 
         all_complete = []
         all_total = []
@@ -256,7 +271,6 @@ def summarize_still():
         pending = 0
 
         completeness = []
-
 
         for night in nights:
             night_complete = s.query(obs_table)\
@@ -269,7 +283,8 @@ def summarize_still():
             OBSs = s.query(obs_table)\
                     .filter(obs_table.date.like(str(night) + '%'))
             obsnums = [OBS.obsnum for OBS in OBSs.all()]
-            complete_obsnums = [OBS.obsnum for OBS in OBSs.all() if OBS.status != 'COMPLETE']
+            complete_obsnums = [
+                OBS.obsnum for OBS in OBSs.all() if OBS.status != 'COMPLETE']
 
             pending = s.query(obs_table)\
                        .filter(obs_table.date.like(str(night) + '%'))\
@@ -279,41 +294,44 @@ def summarize_still():
             #pending = s.query(log_table)\
             #           .filter(log_table.obsnum.in_(complete_obsnums))\
             #           .count()
-                       #.filter(log_table.obsnum.in_(obsnums))\
-                       #.filter(log_table.stage != 'COMPLETE')\
-                       #.filter(obs_table.status != 'COMPLETE')\
+            #.filter(log_table.obsnum.in_(obsnums))\
+            #.filter(log_table.stage != 'COMPLETE')\
+            #.filter(obs_table.status != 'COMPLETE')\
 
             all_complete.append(night_complete)
             all_total.append(night_total)
             all_pending.append(pending)
 
             # TABLE #3:
-            #night_table: nights, complete, total, pending: histogram for each JD vs amount
+            # night_table: nights, complete, total, pending: histogram for each
+            # JD vs amount
 
             if s.query(log_table)\
-                .filter(log_table.obsnum.in_(obsnums))\
-                .count() < 1:
+                    .filter(log_table.obsnum.in_(obsnums))\
+                    .count() < 1:
                 completeness.append((night, 0, night_total, 'Pending'))
                 #print(night, ':', 'completeness', 0, '/', night_total, '[Pending]')
 
             # TABLE #2a:
-            #night completeness table
+            # night completeness table
 
             try:
                 LOG = s.query(log_table)\
                        .filter(log_table.obsnum.in_(obsnums))\
                        .order_by(log_table.timestamp.desc())\
                        .first()
-                       #.one()
-                       #I think this was an error, gets most recent log rather than
-                       #making sure there is only one
+                #.one()
+                # I think this was an error, gets most recent log rather than
+                # making sure there is only one
 
-                if LOG.timestamp > (datetime.datetime.utcnow() - datetime.timedelta(5.0)):
-                    completeness.append((night, night_complete, night_total, LOG.timestamp))
+                if LOG.timestamp > (
+                        datetime.datetime.utcnow() - datetime.timedelta(5.0)):
+                    completeness.append(
+                        (night, night_complete, night_total, LOG.timestamp))
                     #print(night, ':', 'completeness', night_complete, '/', night_total, LOG.timestamp)
 
                 # TABLE #2b:
-                #night completeness table with log timestamp for last entry
+                # night completeness table with log timestamp for last entry
 
                 FAIL_LOGs = s.query(log_table)\
                              .filter(log_table.exit_status > 0)\
@@ -323,7 +341,6 @@ def summarize_still():
             except:
                 #print('No entries in LOG table')
                 fail_obsnums = []
-
 
         # find all obses that have failed in the last 12 hours
         #print('observations pending: %s') % pending
@@ -344,7 +361,8 @@ def summarize_still():
                          .filter(obs_table.obsnum.in_(fail_obsnums))\
                          .order_by(obs_table.stillhost)\
                          .all()
-            fail_stills = list(set([OBS.stillhost for OBS in FAIL_OBSs]))  # list of stills with fails
+            # list of stills with fails
+            fail_stills = list(set([OBS.stillhost for OBS in FAIL_OBSs]))
 
             for fail_still in fail_stills:
                 # get failed obsnums broken down by still
@@ -360,15 +378,14 @@ def summarize_still():
             # TABLE #4:
             # histogram with Still# and Failing Count
 
-
             #print('most recent fails')
             for FAIL_OBS in FAIL_OBSs:
-            #    print(FAIL_OBS.obsnum, FAIL_OBS.status, FAIL_OBS.stillhost)
-                f_obs.append((FAIL_OBS.obsnum, FAIL_OBS.status, FAIL_OBS.stillhost))
+                #    print(FAIL_OBS.obsnum, FAIL_OBS.status, FAIL_OBS.stillhost)
+                f_obs.append(
+                    (FAIL_OBS.obsnum, FAIL_OBS.status, FAIL_OBS.stillhost))
 
         # TABLE #5:
-        #fail table with obsnum, status, and stillhost for each failed obs
-
+        # fail table with obsnum, status, and stillhost for each failed obs
 
         #print('Number of observations completed in the last 24 hours')
 
@@ -379,17 +396,18 @@ def summarize_still():
                          .count()  # HARDWF
         #print('Good count: %s') % good_obscount
 
-
         # TABLE #6:
-        #Label at bottom with Good Observations #, i.e. number of obs completed within the last 24 hours
+        # Label at bottom with Good Observations #, i.e. number of obs
+        # completed within the last 24 hours
 
     return render_template('summarize_still.html',
-                            num_obs=num_obs, num_progress=num_progress, num_complete=num_complete,
-                            nights=nights,
-                            all_complete=all_complete, all_total=all_total, all_pending=all_pending,
-                            completeness=completeness,
-                            f_stills=f_stills, f_counts=f_counts,
-                            f_obs=f_obs, good_obscount=good_obscount)
+                           num_obs=num_obs, num_progress=num_progress, num_complete=num_complete,
+                           nights=nights,
+                           all_complete=all_complete, all_total=all_total, all_pending=all_pending,
+                           completeness=completeness,
+                           f_stills=f_stills, f_counts=f_counts,
+                           f_obs=f_obs, good_obscount=good_obscount)
+
 
 def time_fix(jdstart, jdend, starttime=None, endtime=None):
     '''
@@ -415,8 +433,9 @@ def time_fix(jdstart, jdend, starttime=None, endtime=None):
         jd_start = None
         jd_end = None
 
-    if jd_start == None:
-        startdatetime = datetime.datetime.strptime(starttime, '%Y-%m-%dT%H:%M:%SZ')
+    if jd_start is None:
+        startdatetime = datetime.datetime.strptime(
+            starttime, '%Y-%m-%dT%H:%M:%SZ')
         enddatetime = datetime.datetime.strptime(endtime, '%Y-%m-%dT%H:%M:%SZ')
         start_utc, end_utc = misc_utils.get_jd_from_datetime(startdatetime,
                                                              enddatetime)
@@ -424,6 +443,7 @@ def time_fix(jdstart, jdend, starttime=None, endtime=None):
         start_utc, end_utc = jd_start, jd_end
 
     return start_utc, end_utc
+
 
 def page_args():
     '''
@@ -453,6 +473,7 @@ def page_args():
 
     return start_utc, end_utc, pol, era_type, host, filetype
 
+
 def page_form():
     '''
     outputs relevant page form info
@@ -481,6 +502,7 @@ def page_form():
 
     return start_utc, end_utc, pol, era_type, host, filetype
 
+
 def obs_filter(obs_query, obs_table, start_utc, end_utc, pol, era_type):
     '''
     filters observation query
@@ -507,6 +529,7 @@ def obs_filter(obs_query, obs_table, start_utc, end_utc, pol, era_type):
 
     return obs_query
 
+
 def file_filter(file_query, file_table, host, filetype):
     '''
     filters file query
@@ -526,9 +549,10 @@ def file_filter(file_query, file_table, host, filetype):
         file_query = file_query.filter(file_table.host == host)
     if filetype != 'all':
         file_query = file_query\
-                    .filter(func.substring_index(file_table.filename, '.', -1) == filetype)
+            .filter(func.substring_index(file_table.filename, '.', -1) == filetype)
 
     return file_query
+
 
 @app.route('/search', methods=['GET', 'POST'])
 def search():
@@ -541,7 +565,7 @@ def search():
     html: index
     '''
     polarization_dropdown, era_type_dropdown,\
-    host_dropdown, filetype_dropdown = misc_utils.get_dropdowns()
+        host_dropdown, filetype_dropdown = misc_utils.get_dropdowns()
 
     start_utc, end_utc, pol, era_type, host, filetype = page_args()
 
@@ -549,7 +573,7 @@ def search():
 
     with dbi.session_scope() as s:
         days = list(range(int(start_utc), int(end_utc) + 1))
-        #get julian_day, count for files, split by raw/compressed
+        # get julian_day, count for files, split by raw/compressed
         file_query = s.query(file_table, func.count(file_table))\
                       .join(obs_table)
         file_query = obs_filter(file_query, obs_table,
@@ -558,17 +582,18 @@ def search():
         file_query = file_filter(file_query, file_table, host, filetype)
 
         file_query = file_query\
-                    .group_by(func.substr(obs_table.date, 1, 7))\
-                    .order_by(func.substr(obs_table.date, 1, 7).asc())\
-                    .all()
-        file_query = ((q.observation.julian_day, count) for q, count in file_query)
+            .group_by(func.substr(obs_table.date, 1, 7))\
+            .order_by(func.substr(obs_table.date, 1, 7).asc())\
+            .all()
+        file_query = ((q.observation.julian_day, count)
+                      for q, count in file_query)
         try:
             f_days, f_day_counts = zip(*file_query)
         except:
             f_days = days
             f_day_counts = [0] * len(days)
 
-        #get julian_day, count for observation
+        # get julian_day, count for observation
         obs_query = s.query(func.substr(obs_table.date, 1, 7),
                             func.count(obs_table))
         obs_query = obs_filter(obs_query, obs_table,
@@ -585,20 +610,21 @@ def search():
             j_day_counts = [0] * len(days)
 
     return render_template('search.html',
-                            polarization_dropdown=polarization_dropdown,
-                            era_type_dropdown=era_type_dropdown,
-                            host_dropdown=host_dropdown,
-                            filetype_dropdown=filetype_dropdown,
-                            start_utc=start_utc, end_utc=end_utc,
-                            pol=pol, d_pol=pol,
-                            era_type=era_type, d_et=era_type,
-                            host=host, d_host=host,
-                            filetype=filetype, d_ft=filetype,
-                            days=days,
-                            f_days=f_days, f_day_counts=f_day_counts,
-                            j_days=j_days, j_day_counts=j_day_counts)
+                           polarization_dropdown=polarization_dropdown,
+                           era_type_dropdown=era_type_dropdown,
+                           host_dropdown=host_dropdown,
+                           filetype_dropdown=filetype_dropdown,
+                           start_utc=start_utc, end_utc=end_utc,
+                           pol=pol, d_pol=pol,
+                           era_type=era_type, d_et=era_type,
+                           host=host, d_host=host,
+                           filetype=filetype, d_ft=filetype,
+                           days=days,
+                           f_days=f_days, f_day_counts=f_day_counts,
+                           j_days=j_days, j_day_counts=j_day_counts)
 
-@app.route('/stream_plot', methods = ['GET', 'POST'])
+
+@app.route('/stream_plot', methods=['GET', 'POST'])
 def stream_plot():
     '''
     generate streaming data
@@ -618,15 +644,16 @@ def stream_plot():
                                 pol, era_type)
         file_query = file_filter(file_query, file_table, host, filetype)
         file_query = file_query.group_by(func.substr(obs_table.date, 1, 7))\
-                               .order_by(func.substr(obs_table.date, 1, 7)\
-                               .asc())\
-                               .limit(1)
+                               .order_by(func.substr(obs_table.date, 1, 7)
+                                         .asc())\
+            .limit(1)
 
         file_count = [count for q, count in file_query]
 
     return jsonify({'count': file_count})
 
-@app.route('/data_hist', methods = ['POST'])
+
+@app.route('/data_hist', methods=['POST'])
 def data_hist():
     '''
     generate histogram for data
@@ -640,7 +667,7 @@ def data_hist():
     dbi, obs_table, file_table, log_table = db_objs()
     with dbi.session_scope() as s:
         days = list(range(int(start_utc), int(end_utc) + 1))
-        #get julian_day, count for files, split by raw/compressed
+        # get julian_day, count for files, split by raw/compressed
         file_query = s.query(file_table, func.count(file_table))\
                       .join(obs_table)
         file_query = obs_filter(file_query, obs_table,
@@ -649,17 +676,18 @@ def data_hist():
         file_query = file_filter(file_query, file_table, host, filetype)
 
         file_query = file_query.group_by(func.substr(obs_table.date, 1, 7))\
-                               .order_by(func.substr(obs_table.date, 1, 7)\
-                               .asc())\
-                               .all()
-        file_query = ((int(float(q.observation.date)), count) for q, count in file_query)
+                               .order_by(func.substr(obs_table.date, 1, 7)
+                                         .asc())\
+            .all()
+        file_query = ((int(float(q.observation.date)), count)
+                      for q, count in file_query)
         try:
             f_days, f_day_counts = zip(*file_query)
         except:
             f_days = days
             f_day_counts = [0] * len(days)
 
-        #get julian_day, count for observation
+        # get julian_day, count for observation
         obs_query = s.query(func.substr(obs_table.date, 1, 7),
                             func.count(obs_table))
         obs_query = obs_filter(obs_query, obs_table,
@@ -667,9 +695,9 @@ def data_hist():
                                pol, era_type)
 
         obs_query = obs_query.group_by(func.substr(obs_table.date, 1, 7))\
-                             .order_by(func.substr(obs_table.date, 1, 7)\
-                             .asc())\
-                             .all()
+                             .order_by(func.substr(obs_table.date, 1, 7)
+                                       .asc())\
+            .all()
         try:
             j_days, j_day_counts = zip(*obs_query)
         except:
@@ -677,10 +705,11 @@ def data_hist():
             j_day_counts = [0] * len(days)
 
     return render_template('data_hist.html',
-                            f_days=f_days, f_day_counts=f_day_counts,
-                            j_days=j_days, j_day_counts=j_day_counts)
+                           f_days=f_days, f_day_counts=f_day_counts,
+                           j_days=j_days, j_day_counts=j_day_counts)
 
-@app.route('/search_obs', methods = ['POST'])
+
+@app.route('/search_obs', methods=['POST'])
 def search_obs():
     '''
     generate observation table for histogram bar
@@ -701,14 +730,16 @@ def search_obs():
                                pol, era_type)
         obs_query = obs_query.order_by(obs_table.date.asc()).all()
 
-        log_list = [{var: getattr(obs, var) for var in output_vars} for obs in obs_query]
+        log_list = [{var: getattr(obs, var)
+                     for var in output_vars} for obs in obs_query]
 
     return render_template('search_obs.html',
-                            log_list=log_list, output_vars=output_vars,
-                            start_time=start_utc, end_time=end_utc,
-                            pol=pol, era_type=era_type)
+                           log_list=log_list, output_vars=output_vars,
+                           start_time=start_utc, end_time=end_utc,
+                           pol=pol, era_type=era_type)
 
-@app.route('/save_obs', methods = ['GET'])
+
+@app.route('/save_obs', methods=['GET'])
 def save_obs():
     '''
     saves observations as json
@@ -730,11 +761,12 @@ def save_obs():
         entry_list = [obs.to_dict() for obs in obs_query]
 
     return Response(response=json.dumps(entry_list, sort_keys=True,
-                    indent=4, default=rdbi.decimal_default),
+                                        indent=4, default=rdbi.decimal_default),
                     status=200, mimetype='application/json',
                     headers={'Content-Disposition': 'attachment; filename=obs.json'})
 
-@app.route('/search_file', methods = ['GET', 'POST'])
+
+@app.route('/search_file', methods=['GET', 'POST'])
 def search_file():
     '''
     generate file table for histogram bar
@@ -754,16 +786,17 @@ def search_file():
                                 start_utc, end_utc,
                                 pol, era_type)
         file_query = file_filter(file_query, file_table, host, filetype)
-        
+
         log_list = [{var: getattr(rtp_file, var) for var in output_vars}
                     for rtp_file in file_query.order_by(obs_table.date.asc()).all()]
 
     return render_template('search_file.html',
-                            log_list=log_list, output_vars=output_vars,
-                            start_time=start_utc, end_time=end_utc,
-                            host=host, filetype=filetype)
+                           log_list=log_list, output_vars=output_vars,
+                           start_time=start_utc, end_time=end_utc,
+                           host=host, filetype=filetype)
 
-@app.route('/save_files', methods = ['GET'])
+
+@app.route('/save_files', methods=['GET'])
 def save_files():
     '''
     saves file metadata as json
@@ -782,12 +815,14 @@ def save_files():
                                 pol, era_type)
         file_query = file_filter(file_query, file_table, host, filetype)
 
-        entry_list = [rtp_file.to_dict() for rtp_file in file_query.order_by(obs_table.date.asc()).all()]
+        entry_list = [rtp_file.to_dict() for rtp_file in file_query.order_by(
+            obs_table.date.asc()).all()]
 
     return Response(response=json.dumps(entry_list, sort_keys=True,
-                    indent=4, default=rdbi.decimal_default),
+                                        indent=4, default=rdbi.decimal_default),
                     status=200, mimetype='application/json',
                     headers={'Content-Disposition': 'attachment; filename=file.json'})
+
 
 @app.route('/data_summary_table', methods=['POST'])
 def data_summary_table():
@@ -801,18 +836,19 @@ def data_summary_table():
     start_utc, end_utc, pol, era_type, host, filetype = page_form()
 
     pol_strs, era_type_strs,\
-    host_strs, filetype_strs = misc_utils.get_set_strings()
-    file_map = {host_str: {filetype_str: {'file_count': 0}\
-                for filetype_str in filetype_strs} for host_str in host_strs}
+        host_strs, filetype_strs = misc_utils.get_set_strings()
+    file_map = {host_str: {filetype_str: {'file_count': 0}
+                           for filetype_str in filetype_strs} for host_str in host_strs}
 
     dbi, obs_table, file_table, log_table = db_objs()
     with dbi.session_scope() as s:
         file_query = s.query(file_table.host,
-                             func.substring_index(file_table.filename, '.', -1),
+                             func.substring_index(
+                                 file_table.filename, '.', -1),
                              func.count(file_table))\
-                      .group_by(file_table.host,
-                                func.substring_index(file_table.filename, '.', -1))\
-                      .all()
+            .group_by(file_table.host,
+                      func.substring_index(file_table.filename, '.', -1))\
+            .all()
         for host, filetype, count in file_query:
             file_map[host][filetype].update({'file_count': count})
 
@@ -826,12 +862,13 @@ def data_summary_table():
             file_total[host]['count'] += file_count
 
     no_files = {filetype: {'file_count': 0} for filetype in filetype_strs}
-    host_strs = tuple(host for host, filetype_dict in file_map.items()\
-                           if filetype_dict != no_files)
+    host_strs = tuple(host for host, filetype_dict in file_map.items()
+                      if filetype_dict != no_files)
 
     return render_template('data_summary_table.html',
-                            host_strs=host_strs, filetype_strs=filetype_strs,
-                            file_map=file_map, file_total=file_total)
+                           host_strs=host_strs, filetype_strs=filetype_strs,
+                           file_map=file_map, file_total=file_total)
+
 
 @app.route('/day_summary_table', methods=['POST'])
 def day_summary_table():
@@ -847,10 +884,14 @@ def day_summary_table():
     dbi, obs_table, file_table, log_table = db_objs()
 
     with dbi.session_scope() as s:
-        pol_query = s.query(func.substr(obs_table.date, 1, 7), obs_table.pol, func.count(obs_table))
-        pol_query = obs_filter(pol_query, obs_table, start_utc, end_utc, pol, era_type)
-        pol_query = pol_query.group_by(func.substr(obs_table.date, 1, 7), obs_table.pol).order_by(func.substr(obs_table.date, 1, 7).asc()).all()
+        pol_query = s.query(func.substr(obs_table.date, 1, 7),
+                            obs_table.pol, func.count(obs_table))
+        pol_query = obs_filter(pol_query, obs_table,
+                               start_utc, end_utc, pol, era_type)
+        pol_query = pol_query.group_by(func.substr(obs_table.date, 1, 7), obs_table.pol).order_by(
+            func.substr(obs_table.date, 1, 7).asc()).all()
 
-        pol_map = tuple((julian_day, pol, count) for julian_day, pol, count in pol_query)
+        pol_map = tuple((julian_day, pol, count)
+                        for julian_day, pol, count in pol_query)
 
     return render_template('day_summary_table.html', pol_map=pol_map)

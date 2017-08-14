@@ -18,7 +18,8 @@ sys.path.append(basedir + 'lib')
 
 def main():
 
-    parser = argparse.ArgumentParser(description='MWA - Add observations to Workflow Manager')
+    parser = argparse.ArgumentParser(
+        description='MWA - Add observations to Workflow Manager')
 
     parser.add_argument('--config_file', dest='config_file', required=False,
                         help="Specify the complete path to the config file, by default we'll use etc/still.cfg")
@@ -35,10 +36,12 @@ def main():
     sg.config_file = args.config_file
     process_client_config_file(sg, wf)
     dbi = get_dbi_from_config(args.config_file)
-    dbi.test_db()  # Testing the database to make sure we made a connection, its fun..
+    # Testing the database to make sure we made a connection, its fun..
+    dbi.test_db()
     for obsid in args.obsnums:
         print("Obsid: %s") % obsid
-        dbi.add_observation(obsid, obsid, "GPS", None, None, None, outputhost=None, length=None, status='NEW')
+        dbi.add_observation(obsid, obsid, "GPS", None, None,
+                            None, outputhost=None, length=None, status='NEW')
 
 
 if __name__ == "__main__":

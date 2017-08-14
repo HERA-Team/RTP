@@ -44,16 +44,19 @@ FILE_PROCESSING_STAGES = ['NEW',
 
 
 class SleepTask(ts.Task):
+
     def _run(self):
         return psutil.Popen(['sleep', '100'], stdout=open(os.devnull, 'w'))
 
 
 class NullTask(ts.Task):
+
     def _run(self):
         return psutil.Popen(['ls'], stdout=open(os.devnull, 'w'), cwd=self.cwd)
 
 
 class FakeDataBaseInterface:
+
     def __init__(self, nfiles=10):
         self.files = {}
         self.pids = {}
@@ -69,8 +72,7 @@ class FakeDataBaseInterface:
         return self.files[obsnum]
 
     def list_observations(self):
-        files = self.files.keys()
-        files.sort()
+        files = sorted(self.files.keys())
         return files
 
     def get_neighbors(self, obsnum):
@@ -108,7 +110,8 @@ class FakeDataBaseInterface:
     def set_obs_still_path(self, obsnum, path):
         self.paths[obsnum] = path
 
-    def update_log(self, obsnum, status=None, logtext=None, exit_status=None, append=True):
+    def update_log(self, obsnum, status=None, logtext=None,
+                   exit_status=None, append=True):
         return True
 
 
@@ -124,7 +127,8 @@ class TestFunctions(unittest.TestCase):
         self.assertEqual(pkt[:ts.PKT_LINE_LEN], ts.pad('7'))
 
     def test_from_pkt(self):
-        pkt = ts.pad('5') + ts.pad('UV') + ts.pad('4') + ts.pad('still') + ts.pad('1')  # Jon : HARDWF
+        pkt = ts.pad('5') + ts.pad('UV') + ts.pad('4') + \
+            ts.pad('still') + ts.pad('1')  # Jon : HARDWF
         task, obs, still, args = ts.from_pkt(pkt)
         self.assertEqual(task, 'UV')  # Jon : HARDWF
         self.assertEqual(obs, 4)
@@ -146,9 +150,11 @@ class TestTask(unittest.TestCase):
         self.var = 0
 
         class VarTask(ts.Task):
+
             def _run(me):
                 self.var += 1
-                return psutil.Popen(['ls'], stdout=open(os.devnull, 'w'), cwd=me.cwd)
+                return psutil.Popen(['ls'], stdout=open(
+                    os.devnull, 'w'), cwd=me.cwd)
         self.VarTask = VarTask
 
     def test_run(self):
@@ -158,7 +164,7 @@ class TestTask(unittest.TestCase):
         var = self.var
         t.run()
         self.assertEqual(self.var, var + 1)
-        self.assertTrue(type(t.process) is psutil.Popen)
+        self.assertTrue(isinstance(t.process, psutil.Popen))
         t.finalize()
         self.assertEqual(dbi.get_obs_status(1), 'UV')  # Jon : HARDWF
         self.assertRaises(RuntimeError, t.run)
@@ -242,6 +248,7 @@ class TestTaskServer(unittest.TestCase):
             self.dbi.files[f] = 'UV_POT'  # Jon : HARDWF
 
         class NullHandler(ts.TaskHandler):
+
             def handle(me):
                 task, obs, still, args = me.get_pkt()
                 t = NullTask(task, obs, still, args, self.dbi)
@@ -253,7 +260,8 @@ class TestTaskServer(unittest.TestCase):
         thd.start()
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            sock.sendto(ts.to_pkt('UV', 1, 'still', []), ('127.0.0.1', TEST_PORT))  # Jon : HARDWF
+            sock.sendto(ts.to_pkt('UV', 1, 'still', []),
+                        ('127.0.0.1', TEST_PORT))  # Jon : HARDWF
             while self.var != 1:
                 time.sleep(.6)
             self.assertEqual(self.var, 1)
@@ -281,6 +289,7 @@ class TestTaskClient(unittest.TestCase):
         self.pkt = ''
 
         class SleepHandler(ts.TaskHandler):
+
             def handle(me):
                 self.pkt = me.get_pkt()
         s = ts.TaskServer(self.dbi, handler=SleepHandler, port=TEST_PORT)
@@ -292,7 +301,8 @@ class TestTaskClient(unittest.TestCase):
         finally:
             s.shutdown()
             thd.join()
-        self.assertEqual(self.pkt, ('UV', 1, 'localhost', ['a', 'b', 'c']))  # Jon : HARDWF
+        self.assertEqual(self.pkt, ('UV', 1, 'localhost',
+                                    ['a', 'b', 'c']))  # Jon : HARDWF
 
     def test_gen_args(self):
         # tc = ts.TaskClient(self.dbi, 'localhost')
@@ -314,6 +324,7 @@ class TestTaskClient(unittest.TestCase):
         self.pkt = ''
 
         class SleepHandler(ts.TaskHandler):
+
             def handle(me):
                 self.pkt = me.get_pkt()
         s = ts.TaskServer(self.dbi, handler=SleepHandler, port=TEST_PORT)
@@ -325,7 +336,8 @@ class TestTaskClient(unittest.TestCase):
         finally:
             s.shutdown()
             thd.join()
-        self.assertEqual(self.pkt, ('UV', 1, 'localhost', ['test.uv', 'localhost:./test.uv']))  # Jon : HARDWF
+        self.assertEqual(self.pkt, ('UV', 1, 'localhost', [
+                         'test.uv', 'localhost:./test.uv']))  # Jon : HARDWF
 
 
 if __name__ == '__main__':

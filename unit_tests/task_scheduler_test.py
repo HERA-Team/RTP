@@ -34,8 +34,7 @@ class FakeDataBaseInterface:
         return self.files[obsnum]
 
     def list_observations(self):
-        files = self.files.keys()
-        files.sort()
+        files = sorted(self.files.keys())
         return files
 
     def get_neighbors(self, filename):
@@ -76,6 +75,7 @@ class FakeDataBaseInterface:
 
 
 class TestTaskScheduler(unittest.TestCase):
+
     def setUp(self):
         self.dbi = FakeDataBaseInterface()
         self.ts = ts.TaskServer(self.dbi)
@@ -92,7 +92,8 @@ class TestTaskScheduler(unittest.TestCase):
     def test_end_to_end(self):
         tc = {0: ts.TaskClient(self.dbi, 'localhost')}
         s = ts.Scheduler(tc, actions_per_still=1)
-        thd = threading.Thread(target=s.start, args=(self.dbi,), kwargs={'ActionClass': ts.Action, 'action_args': (tc,), 'sleeptime': 0})
+        thd = threading.Thread(target=s.start, args=(self.dbi,), kwargs={
+                               'ActionClass': ts.Action, 'action_args': (tc,), 'sleeptime': 0})
         thd.start()
         try:
             def all_done():
@@ -119,9 +120,11 @@ class TestTaskScheduler(unittest.TestCase):
         ts1 = ts.TaskServer(dbi, data_dir='still1', port=4442)
         ts0_thd = threading.Thread(target=ts0.start)
         ts1_thd = threading.Thread(target=ts1.start)
-        tc = {0: ts.TaskClient(dbi, 'localhost', port=4441), 1: ts.TaskClient(dbi, 'localhost', port=4442)}
+        tc = {0: ts.TaskClient(dbi, 'localhost', port=4441),
+              1: ts.TaskClient(dbi, 'localhost', port=4442)}
         s = ts.Scheduler(tc, actions_per_still=2, blocksize=2)
-        s_thd = threading.Thread(target=s.start, args=(dbi,), kwargs={'ActionClass': ts.Action, 'action_args': (tc, 30), 'sleeptime': 0})
+        s_thd = threading.Thread(target=s.start, args=(dbi,), kwargs={
+                                 'ActionClass': ts.Action, 'action_args': (tc, 30), 'sleeptime': 0})
         ts0_thd.start()
         ts1_thd.start()
         s_thd.start()

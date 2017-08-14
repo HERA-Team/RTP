@@ -27,7 +27,8 @@ def file2pol(zenuv):
     return re.findall(r'\.(.{2})\.', zenuv)[0]
 
 
-parser = argparse.ArgumentParser(description='Retry failed observations by filename.')
+parser = argparse.ArgumentParser(
+    description='Retry failed observations by filename.')
 
 parser.add_argument('--reset', dest='reset', action='store_true',
                     help='Reset observation to start from beginning, not just retry currente step.')
@@ -53,10 +54,12 @@ process_client_config_file(sg, wf)
 reset_status = wf.workflow_actions[0]
 
 # connect to the database
-dbi = StillDataBaseInterface(sg.dbhost, sg.dbport, sg.dbtype, sg.dbname, sg.dbuser, sg.dbpasswd, test=False)
+dbi = StillDataBaseInterface(
+    sg.dbhost, sg.dbport, sg.dbtype, sg.dbname, sg.dbuser, sg.dbpasswd, test=False)
 
 # Setup logging
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger('retry_failed_by_filename.py')
 
 if args.debug:
@@ -79,14 +82,15 @@ for name in args.names:
         # In current usage, the "obsnum" is the file basename.
         obsnum = os.path.basename(name)
 
-        obs = s.query(Observation).filter(Observation.obsnum == obsnum).one_or_none()
+        obs = s.query(Observation).filter(
+            Observation.obsnum == obsnum).one_or_none()
         if obs is None:
             print("failed on filename \"%s\": nothing with that obsnum" % name)
             continue
 
         if obs.current_stage_in_progress not in ('FAILED', 'KILLED'):
             print("skipping \"%s\": current_stage is \"%s\", not FAILED or KILLED" % (name,
-                  obs.current_stage_in_progress))
+                                                                                      obs.current_stage_in_progress))
             continue
 
         print("issuing a %s for \"%s\"" % (desc, name))
@@ -95,7 +99,8 @@ for name in args.names:
             dbi.set_obs_still_host(obsnum, None)
         dbi.update_obs_current_stage(obsnum, None)
         dbi.set_obs_pid(obsnum, None)
-        dbi.add_log(obsnum, desc.upper(), "doing a %s at user request" % desc, 0)
+        dbi.add_log(obsnum, desc.upper(),
+                    "doing a %s at user request" % desc, 0)
     except Exception as e:
         print("failed on filename \"%s\": %s" % (name, e), file=sys.stderr)
 

@@ -12,7 +12,7 @@ import optparse
 import os
 import sys
 import re
-import numpy as n
+import numpy as np
 import socket
 import traceback
 
@@ -20,7 +20,6 @@ basedir = os.path.dirname(os.path.realpath(__file__))[:-3]
 sys.path.append(basedir + 'lib')
 
 from dbi import DataBaseInterface
-#from dbi import add_observations
 from dbi import jdpol2obsnum
 from dbi import Still
 from still import get_dbi_from_config
@@ -39,8 +38,10 @@ def file2pol(zenuv):
 o = optparse.OptionParser()
 o.set_usage('add_observations.py *.uv')
 o.set_description(__doc__)
-o.add_option('--length', type=float, help='length of the input observations in minutes [default=average difference between filenames]')
-o.add_option('-t', action='store_true', help='Test. Only print, do not touch db')
+o.add_option('--length', type=float,
+             help='length of the input observations in minutes [default=average difference between filenames]')
+o.add_option('-t', action='store_true',
+             help='Test. Only print, do not touch db')
 o.add_option('--overwrite', action='store_true',
              help='Default action is to skip obsrvations already in the db. Setting this option overrides this safety feature and attempts anyway')
 opts, args = o.parse_args(sys.argv[1:])
@@ -57,7 +58,8 @@ sg.config_file = config_file
 process_client_config_file(sg, wf)
 
 dbi = get_dbi_from_config(config_file)
-dbi.test_db()  # Testing the database to make sure we made a connection, its fun..
+# Testing the database to make sure we made a connection, its fun..
+dbi.test_db()
 
 # dbi = DataBaseInterface()
 
@@ -75,13 +77,14 @@ for filename in args:
     pols.append(file2pol(filename))
     jds.append(float(file2jd(filename)))
 
-jds = n.array(jds)
-nights = list(set(jds.astype(n.int)))
+jds = np.array(jds)
+nights = list(set(jds.astype(np.int)))
 if opts.length is not None:
     djd = opts.length / 60. / 24
 else:
-    jds_onepol = n.sort([jd for i, jd in enumerate(jds) if pols[i] == pols[0] and jd.astype(int) == nights[0]])
-    djd = n.mean(n.diff(jds_onepol))
+    jds_onepol = np.sort([jd for i, jd in enumerate(jds) if pols[
+                        i] == pols[0] and jd.astype(int) == nights[0]])
+    djd = np.mean(np.diff(jds_onepol))
     print("setting length to %s days") % djd
 
 pols = list(set(pols))  # these are the pols I have to iterate over
@@ -96,18 +99,20 @@ for night in nights:
 for night in nights:
     print("adding night %s") % night
     obsinfo = []
-    nightfiles = [filename for filename in args if int(float(file2jd(filename))) == night]
+    nightfiles = [filename for filename in args if int(
+        float(file2jd(filename))) == night]
     print len(nightfiles)
     for pol in pols:
         # filter off all pols but the one I'm currently working on
-        files = [filename for filename in nightfiles if file2pol(filename) == pol]
-        files.sort()
+        files = sorted([filename for filename in nightfiles if file2pol(
+            filename) == pol])
         for i, filename in enumerate(files):
-            obsnum = str(jdpol2obsnum(float(file2jd(filename)), file2pol(filename), djd))
+            obsnum = str(jdpol2obsnum(
+                float(file2jd(filename)), file2pol(filename), djd))
             try:
                 dbi.get_obs(obsnum)
                 if opts.overwrite:
-                    raise(StandardError)
+                    raise(Exception)
                 print filename, "found in db, skipping"
             except:
                 obsinfo.append({
@@ -124,17 +129,18 @@ for night in nights:
     for i, obs in enumerate(obsinfo):
         filename = obs['filename']
         if i != 0:
-            if n.abs(obsinfo[i - 1]['date'] - obs['date']) < (djd * 1.2):
+            if np.abs(obsinfo[i - 1]['date'] - obs['date']) < (djd * 1.2):
                 obsinfo[i].update({'neighbor_low': obsinfo[i - 1]['date']})
         if i != (len(obsinfo) - 1):
-            if n.abs(obsinfo[i + 1]['date'] - obs['date']) < (djd * 1.2):
+            if np.abs(obsinfo[i + 1]['date'] - obs['date']) < (djd * 1.2):
                 obsinfo[i].update({'neighbor_high': obsinfo[i + 1]['date']})
     # assert(len(obsinfo)==len(args))
     if opts.t:
         print "NOT ADDING OBSERVATIONS TO DB"
         print "HERE is what would have been added"
         for obs in obsinfo:
-            print("Filename : %s, obsnum: %s") % (obs['filename'], obs['obsnum'])
+            print("Filename : %s, obsnum: %s") % (
+                obs['filename'], obs['obsnum'])
             print("neighbors - Low: %s  High: %s") % (obs.get('neighbor_low', None),
                                                       obs.get('neighbor_high', None))
     elif len(obsinfo) > 0:

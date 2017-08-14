@@ -39,7 +39,7 @@ parser.add_argument('--status', dest='status', required=False, default='',
 parser.add_argument('--config_file', dest='config_file', required=False,
                     help="Specify the complete path to the config file")
 
-parser.add_argument('jds', nargs='+',type=str,metavar='JD',
+parser.add_argument('jds', nargs='+', type=str, metavar='JD',
                     help="List of integer julian dates to reset.")
 
 parser.set_defaults(config_file="%setc/still.cfg" % basedir)
@@ -55,10 +55,12 @@ if args.status == '':
     args.status = wf.workflow_actions[0]
 
 # connect to the database
-dbi = StillDataBaseInterface(sg.dbhost, sg.dbport, sg.dbtype, sg.dbname, sg.dbuser, sg.dbpasswd, test=False)
+dbi = StillDataBaseInterface(
+    sg.dbhost, sg.dbport, sg.dbtype, sg.dbname, sg.dbuser, sg.dbpasswd, test=False)
 
 # Setup logging
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger('reset_observations.py')
 
 if args.debug:
@@ -67,24 +69,28 @@ else:
     logger.setLevel(logging.INFO)
 
 
-# for each file get the obsnum, then reset the status to first item in config files workflow_actions
+# for each file get the obsnum, then reset the status to first item in
+# config files workflow_actions
 
-obsnum=0
+obsnum = 0
 # for filename in glob.glob(args.files):
 
 for jd in args.jds:
-    #update observation set observation.status = 'UV_POT' where observation.date like '2456663%';
+    # update observation set observation.status = 'UV_POT' where
+    # observation.date like '2456663%';
     try:
         s = dbi.Session()
-        OBSES = s.query(Observation).filter(Observation.date.like('{jd}%'.format(jd=jd)))  # XXX note assumes we are not noting that this file is copied.
+        # XXX note assumes we are not noting that this file is copied.
+        OBSES = s.query(Observation).filter(
+            Observation.date.like('{jd}%'.format(jd=jd)))
         obsnumbs = [obs.obsnum for obs in OBSES]
         s.close()
         for obsnum in obsnumbs:
-            dbi.set_obs_status(obsnum,args.status)
+            dbi.set_obs_status(obsnum, args.status)
             dbi.set_obs_pid(obsnum, None)
             dbi.set_obs_still_host(obsnum, None)
             dbi.add_log(obsnum, args.status, "issuing a reset_observations", 0)
-            dbi.update_obs_current_stage(obsnum,None)
+            dbi.update_obs_current_stage(obsnum, None)
     except Exception as e:
-        print("failed on jd/obsnum %s/%s: %s") % (jd,obsnum, e)
+        print("failed on jd/obsnum %s/%s: %s") % (jd, obsnum, e)
         continue

@@ -64,6 +64,7 @@ LEAP_SECONDS = (('July 1, 2015', 17),
 MJD_0 = 2400000.5
 MJD_JD2000 = 51544.5
 
+
 def hours_to_degrees(angle):
     '''
     converts decimal hours to degrees
@@ -80,6 +81,7 @@ def hours_to_degrees(angle):
     76.5
     '''
     return angle * 15.
+
 
 def hours_to_radians(angle):
     '''
@@ -98,6 +100,7 @@ def hours_to_radians(angle):
     '''
     return np.radians(hours_to_degrees(angle))
 
+
 def degrees_to_hours(angle):
     '''
     converts degrees to decimal hours
@@ -115,6 +118,7 @@ def degrees_to_hours(angle):
     '''
     return angle / 15.
 
+
 def radians_to_hours(angle):
     '''
     converts degrees to decimal hours
@@ -131,6 +135,7 @@ def radians_to_hours(angle):
     45.836623610465857
     '''
     return degrees_to_hours(np.degrees(angle))
+
 
 def decimal_to_sexagesimal(decimal):
     '''
@@ -161,6 +166,7 @@ def decimal_to_sexagesimal(decimal):
 
     return integral.astype(int), minutes.astype(int), seconds
 
+
 def sexagesimal_to_decimal(hd, minutes, seconds):
     '''
     convert sexagesimal hours or degrees to decimal
@@ -182,6 +188,7 @@ def sexagesimal_to_decimal(hd, minutes, seconds):
     '''
     return hd + minutes / 60. + seconds / 3600.
 
+
 def ipart(num):
     '''
     gets integer part of number as float
@@ -198,6 +205,7 @@ def ipart(num):
     15.0
     '''
     return float(int(num))
+
 
 def gcal_to_jd(year, month, day, hour=None, minute=None, second=None):
     '''
@@ -233,7 +241,7 @@ def gcal_to_jd(year, month, day, hour=None, minute=None, second=None):
     jd += day - 2432075.5  # was 32075; add 2400000.5
 
     jd -= 0.5  # 0 hours; above JD is for midday, switch to midnight.
-    #add to jd for hms 
+    # add to jd for hms
     if hour:
         jd += hour / (24.0)
     if minute:
@@ -242,6 +250,7 @@ def gcal_to_jd(year, month, day, hour=None, minute=None, second=None):
         jd += second / (24.0 * 60 * 60)
 
     return MJD_0 + round(jd, 5)
+
 
 def jd_to_gcal(jd1, jd2):
     '''
@@ -254,7 +263,7 @@ def jd_to_gcal(jd1, jd2):
 
     Returns
     -------
-    tuple: 
+    tuple:
         int: year
         int: month
         int: day
@@ -296,6 +305,7 @@ def jd_to_gcal(jd1, jd2):
 
     return int(year), int(month), int(day), f
 
+
 def time_to_decimal(time):
     '''
     converts a time/datetime object into decimal time
@@ -310,6 +320,7 @@ def time_to_decimal(time):
     '''
     return (time.hour + time.minute / 60. + time.second / 3600. +
             time.microsecond / 3600000000.)
+
 
 def decimal_to_time(hours):
     '''
@@ -332,6 +343,7 @@ def decimal_to_time(hours):
     microseconds = int(seconds_frac * 1e6)
 
     return datetime.time(hours, minutes, seconds, microseconds)
+
 
 def date_to_juliandate(year, month, day):
     '''
@@ -377,6 +389,7 @@ def date_to_juliandate(year, month, day):
 
     return B + C + D + day + 1720994.5
 
+
 def datetime_to_juliandate(dt):
     '''
     convert a datetime object in UTC to a Julian Date
@@ -394,6 +407,7 @@ def datetime_to_juliandate(dt):
 
     return A + B
 
+
 def juliandate_to_modifiedjd(juliandate):
     '''
     convert a Julian Date to a Modified Julian Date
@@ -401,7 +415,7 @@ def juliandate_to_modifiedjd(juliandate):
     Parameters
     ----------
     juliandate | float: a Julian Date
-    
+
     Returns
     -------
     float: the Modified Julian Date
@@ -410,6 +424,7 @@ def juliandate_to_modifiedjd(juliandate):
     49285.0
     '''
     return juliandate - 2400000.5
+
 
 def modifiedjd_to_juliandate(modifiedjd):
     '''
@@ -428,6 +443,7 @@ def modifiedjd_to_juliandate(modifiedjd):
     '''
     return modifiedjd + 2400000.5
 
+
 def datetime_to_modifiedjd(dt):
     '''
     convert a datetime object in UTC to a Modified Julian Date
@@ -443,6 +459,7 @@ def datetime_to_modifiedjd(dt):
     jd = datetime_to_juliandate(dt)
 
     return juliandate_to_modifiedjd(jd)
+
 
 def juliandate_to_gmst(juliandate):
     '''
@@ -471,6 +488,7 @@ def juliandate_to_gmst(juliandate):
 
     return gmst % 24.
 
+
 def utc_to_gmst(dt):
     '''
     convert a datetime object in UTC time to Greenwich Mean Sidereal Time
@@ -489,6 +507,7 @@ def utc_to_gmst(dt):
     jd = datetime_to_juliandate(dt)
 
     return juliandate_to_gmst(jd)
+
 
 def gmst_to_utc(dt):
     '''
@@ -518,6 +537,7 @@ def gmst_to_utc(dt):
 
     return dt.replace(hour=time.hour, minute=time.minute, second=time.seconds,
                       microsecond=time.microsecond)
+
 
 def juliandate_to_utc(juliandate):
     '''
@@ -572,6 +592,7 @@ def juliandate_to_utc(juliandate):
 
     return datetime.datetime.combine(date, time)
 
+
 def modifiedjd_to_utc(modifiedjd):
     '''
     convert a Modified Julian Date to datetime object in UTC
@@ -590,6 +611,7 @@ def modifiedjd_to_utc(modifiedjd):
     juliandate = modifiedjd_to_juliandate(modifiedjd)
 
     return juliandate_to_utc(juliandate)
+
 
 def gmst_to_lst(hours, longitude):
     '''
@@ -613,6 +635,7 @@ def gmst_to_lst(hours, longitude):
 
     return lst
 
+
 def lst_to_gmst(hours, longitude):
     '''
     convert Local Sidereal Time to Greenwich Mean Sidereal Time
@@ -635,6 +658,7 @@ def lst_to_gmst(hours, longitude):
 
     return gmst
 
+
 def utc_to_lst(dt, longitude):
     '''
     convert UTC to Local Sidereal Time
@@ -651,6 +675,7 @@ def utc_to_lst(dt, longitude):
     gmst = utc_to_gmst(dt)
 
     return gmst_to_lst(gmst, longitude)
+
 
 def gps_to_utc(timestamp):
     '''
@@ -669,6 +694,7 @@ def gps_to_utc(timestamp):
 
     return timestamp - offset
 
+
 def utc_to_gps(timestamp):
     '''
     convert UTC to GPS time
@@ -686,6 +712,7 @@ def utc_to_gps(timestamp):
 
     return timestamp + offset
 
+
 def utc_from_string(date):
     '''
     convert a date string to UTC
@@ -702,6 +729,7 @@ def utc_from_string(date):
 
     return calendar.timegm(t)
 
+
 def gps_from_string(date):
     '''
     convert a date string to GPS time
@@ -717,6 +745,7 @@ def gps_from_string(date):
     t = strptime(date, '%B %d, %Y')
 
     return utc_to_gps(calendar.timegm(t))
+
 
 def gps_to_lst(timestamp, longitude):
     '''
@@ -736,6 +765,7 @@ def gps_to_lst(timestamp, longitude):
 
     return utc_to_lst(utc, longitude)
 
+
 def gps_to_datetime(timestamp):
     '''
     convert a GPS timestamp to datetime object
@@ -751,6 +781,7 @@ def gps_to_datetime(timestamp):
     gps_dt = datetime.datetime.utcfromtimestamp(timestamp)
 
     return gps_dt
+
 
 def datetime_to_gps(dt):
     '''

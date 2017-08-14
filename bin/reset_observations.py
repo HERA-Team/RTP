@@ -55,10 +55,12 @@ if args.status == '':
     args.status = wf.workflow_actions[0]
 
 # connect to the database
-dbi = StillDataBaseInterface(sg.dbhost, sg.dbport, sg.dbtype, sg.dbname, sg.dbuser, sg.dbpasswd, test=False)
+dbi = StillDataBaseInterface(
+    sg.dbhost, sg.dbport, sg.dbtype, sg.dbname, sg.dbuser, sg.dbpasswd, test=False)
 
 # Setup logging
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger('reset_observations.py')
 
 if args.debug:
@@ -67,7 +69,8 @@ else:
     logger.setLevel(logging.INFO)
 
 
-# for each file get the obsnum, then reset the status to first item in config files workflow_actions
+# for each file get the obsnum, then reset the status to first item in
+# config files workflow_actions
 
 obsnums = []
 
@@ -78,7 +81,8 @@ for filename in args.files:
 
     try:
         s = dbi.Session()
-        FILE = s.query(File).filter(File.filename == filename).one()  # XXX note assumes we are not noting that this file is copied.
+        # XXX note assumes we are not noting that this file is copied.
+        FILE = s.query(File).filter(File.filename == filename).one()
 
         obsnum = FILE.obsnum
         logger.debug("found obsnum {obsnum}".format(obsnum=obsnum))
