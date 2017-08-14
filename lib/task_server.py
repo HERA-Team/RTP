@@ -285,10 +285,16 @@ class TaskClient:
         #  These varibles are here to be accessible to the arguments variable in the config file
         stillhost = self.dbi.get_obs_still_host(obs)
         stillpath = self.dbi.get_still_info(self.host_port[0]).data_dir
-        neighbors = [(self.dbi.get_obs_still_host(n), self.dbi.get_still_info(self.host_port[0]).data_dir) + self.dbi.get_input_file(n)
-                     for n in self.dbi.get_neighbors(obs) if n is not None]
-
-        neighbors_base = list(self.dbi.get_neighbors(obs))
+        # PCL: I'm lazy and can't think of a better way to do this for now, so I'm leaving this block here
+        #      as a purposely non-accessible block, but will reorganize later
+        if False:
+            neighbors = [(self.dbi.get_obs_still_host(n), self.dbi.get_still_info(self.host_port[0]).data_dir)
+                         + self.dbi.get_input_file(n) for n in self.dbi.get_neighbors(obs) if n is not None]
+            neighbors_base = list(self.dbi.get_neighbors(obs))
+        else:
+            neighbors = [(self.dbi.get_obs_still_host(n), self.dbi.get_still_info(self.host_port[0]).data_dir)
+                         + self.dbi.get_input_file(n) for n in self.dbi.get_pol_neighbors(obs) if n is not None]
+            neighbors_base = list(self.dbi.get_pol_neighbors(obs))
         if not neighbors_base[0] is None:
             neighbors_base[0] = self.dbi.get_input_file(neighbors_base[0])[-1]
         if not neighbors_base[1] is None:

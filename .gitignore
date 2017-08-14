@@ -2,3 +2,5 @@
 /etc/still.cfg
 /log
 *~
+dbi.log
+retry.txt
