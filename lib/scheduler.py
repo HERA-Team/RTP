@@ -1,4 +1,3 @@
-
 import time
 import sys
 import threading
@@ -363,6 +362,10 @@ class Scheduler(ThreadingMixIn, HTTPServer):
             low_obs = self.dbi.get_neighbors(low_obs)[0]
         return neighbor_obs_nums
 
+    def get_all_pol_neighbors(self, obsnum):
+        # get all polarization neighbors
+        return self.dbi.get_pol_neighbors(obsnum)
+
     def pop_action_queue(self, still, tx=False):
         '''Return highest priority action for the given still.'''
         # Seems like we're going through all the actions to find the ones for the particular still..
@@ -512,6 +515,22 @@ class Scheduler(ThreadingMixIn, HTTPServer):
                 next_step = self.wf.workflow_actions[cur_step_index + 1]
 
             neighbor_status = [self.dbi.get_obs_status(n) for n in neighbors if n is not None]
+        elif self.wf.pol_neighbors == 1:
+            pol_neighbors = self.dbi.get_pol_neighbors(obsnum)
+
+            if len(pol_neighbors) != 3:
+                raise AssertionError("Was expecting 3 pol_neighbors, got {} instead".format(
+                    str(len(pol_neighbors))))
+
+            # decide when it's time to transition to actions_endfile
+            try:
+                cur_step_index = self.wf.workflow_actions.index(status)
+                next_step = self.wf.workflow_actions[cur_step_index + 1]
+            except IndexError:
+                cur_step_index = self.wf.workflow_actions_endfile.index(status)
+                next_step = self.workflow_actions_endfile[cur_step_index + 1]
+
+            neighbor_status = [self.dbi.get_obs_status(n) for n in pol_neighbors if n is not None]
         else:
             cur_step_index = self.wf.workflow_actions.index(status)
             next_step = self.wf.workflow_actions[cur_step_index + 1]
@@ -531,9 +550,13 @@ class Scheduler(ThreadingMixIn, HTTPServer):
 
             self.dbi.set_obs_still_host(obsnum, still)  # Assign the still to the obsid
 
-            if self.lock_all_neighbors_to_same_still == 1 and self.wf.neighbors == 1:
-                for neighbor in self.get_all_neighbors(obsnum):
-                    self.dbi.set_obs_still_host(neighbor, still)
+            if self.lock_all_neighbors_to_same_still == 1:
+                if self.wf.neighbors == 1:
+                    for neighbor in self.get_all_neighbors(obsnum):
+                        self.dbi.set_obs_still_host(neighbor, still)
+                elif self.wf.pol_neighbors == 1:
+                    for neighbor in self.get_all_pol_neighbors(obsnum):
+                        self.dbi.set_obs_still_host(neighbor, still)
 
         if still != 0:  # If the obsnum is assigned to a server that doesn't exist at the moment we need to skip it, maybe reassign later
             if ActionClass is None:
@@ -541,6 +564,9 @@ class Scheduler(ThreadingMixIn, HTTPServer):
 
             a = ActionClass(obsnum, next_step, neighbor_status, self.task_clients[still], self.wf, still, timeout=self.timeout)
             if self.wf.neighbors == 1:
+                if a.has_prerequisites() is True:
+                    return a
+            elif self.wf.pol_neighbors == 1:
                 if a.has_prerequisites() is True:
                     return a
             else:

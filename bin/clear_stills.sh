@@ -2,6 +2,6 @@
 set -e 
 
 for i in 1 2 3 4; do
-    echo ssh still${i} "echo rm -rf /data/zen.*.uv{,c} /data/*bad_ants* /data/*png"
-    ssh still${i} "rm -rf /data/zen.*.uv{,c} /data/*bad_ants* /data/*png"
+    echo ssh -t still${i} "sudo rm -rf /data/zen.*.uv{,c,cO,cOR} /data/*bad_ants* /data/*png /data/*ant_metrics* /data/*first.calfits /data/*omni.calfits /data/*stdout_stderr /data/*.uvfits"
+    ssh -t still${i} "sudo rm -rf /data/zen.*.uv{,c,cO,cOR} /data/*bad_ants* /data/*png /data/*ant_metrics* /data/*first.calfits /data/*omni.calfits /data/*stdout_stderr /data/*.uvfits"
 done
