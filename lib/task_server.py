@@ -13,8 +13,6 @@ import sys
 import psutil
 import pickle
 import subprocess
-import math
-import astropy.time as atime
 
 from string import upper
 
@@ -213,21 +211,8 @@ class Task:
 
         # log to M&C
         if self.ts.wf.log_to_mc:
-            try:
-                from hera_mc.mc_session import add_rtp_process_event
-            except ImportError:
-                return
-
-            try:
-                t = atime.Time.now()
-                add_rtp_process_event(t, self.obs, "started")
-            except:
-                # save to disk to read later
-                gps_sec = math.floor(t.gps)
-                info_dict = {"time": t, "obsid": self.obs, "event": "started"}
-                filename = "pe_{0}_{1}.pkl".format(self.obs, str(int(gps_sec)))
-                with open(filename, 'w') as f:
-                    pickle.dump(info_dict, f)
+            import mc_utils
+            mc_utils.add_process_event(self.obs, "started")
 
     def record_failure(self, failure_type="FAILED"):
         for task in self.ts.active_tasks:
@@ -240,90 +225,24 @@ class Task:
         logger.error("Task.record_failure: Task: %s, Obsnum: %s, Type: %s" % (
             self.task, self.obs, failure_type))
 
-        # log to M&C
         if self.ts.wf.log_to_mc:
-            try:
-                from hera_mc.mc_session import add_rtp_process_event
-            except ImportError:
-                return
+            # log to M&C
+            import mc_utils
+            mc_utils.add_process_event(self.obs, "error")
 
-            try:
-                t = atime.Time.now()
-                add_rtp_process_event(t, self.obs, "error")
-            except:
-                # save to disk to read in later
-                gps_sec = math.floor(t.gps)
-                info_dict = {"time": t, "obsid": self.obs, "event": "error"}
-                filename = "pe_{0}_{1}.pkl".format(self.obs, str(int(gps_sec)))
-                with open(filename, 'w') as f:
-                    pickle.dump(info_dict, f)
-
-            return
+        return
 
     def record_completion(self):
         self.dbi.set_obs_status(self.obs, self.task)
         self.dbi.set_obs_pid(self.obs, 0)
         self.remove_file_if_exists(self.stdout_stderr_file)
 
-        # log to M&C
         if self.ts.wf.log_to_mc:
-            try:
-                from hera_mc.mc_session import add_rtp_process_event
-            except ImportError:
-                return
-
-            try:
-                t = atime.Time.now()
-                add_rtp_process_event(t, self.obs, "finished")
-            except:
-                # save to disk to read later
-                gps_sec = math.floor(t.gps)
-                info_dict = {"time": t, "obsid": self.obs, "event": "started"}
-                filename = "pe_{0}_{1}.pkl".format(self.obs, str(int(gps_sec)))
-                with open(filename, 'w') as f:
-                    pickle.dump(info_dict, f)
-
-            # also log a Process Record
-            from hera_mc.mc_session import add_rtp_process_record
-
-            try:
-                # get git versions for relevant packages
-                import rtp.version
-                import hera_qm.version
-                import hera_cal.version
-                import pyuvdata.version
-
-                rtp_info = rtp.version.construct_version_info()
-                hera_qm_info = hera_qm.version.contruct_version_info()
-                hera_cal_info = hera_cal.version.construct_version_info()
-                pyuvdata_info = pyuvdata.version.construct_version_info()
-
-                rtp_version = rtp_info['version']
-                rtp_hash = rtp_info['git_hash']
-                hera_qm_version = hera_qm_info['version']
-                hera_qm_hash = hera_qm_info['git_hash']
-                hera_cal_version = hera_cal_info['version']
-                hera_cal_hash = hera_cal_info['git_hash']
-                pyuvdata_version = pyuvdata_info['version']
-                pyuvdata_hash = pyuvdata_hash['version']
-
-                # get list of tasks
-                all_actions = self.ts.wf.workflow_actions + self.ts.wf.workflow_actions_endfile
-                pipline_list = ','.join([all_actions])
-
-                # save it all to the M&C database
-                add_rtp_process_record(t, self.obs, pipeline_list, rtp_version, rtp_hash, hera_qm_version,
-                                       hera_qm_hash, hera_cal_version, hera_cal_hash, pyuvdata_version, pyuvdata_hash)
-            except:
-                # save to disk to read later
-                gps_sec = math.floor(t.gps)
-                info_dict = {"time": t, "obsid": self.obs, "pipeline_list": pipeline_list, "rtp_git_version": rtp_version,
-                             "rtp_git_hash": rtp_hash, "hera_qm_git_version": hera_qm_version, "hera_qm_git_hash": hera_qm_hash,
-                             "hera_cal_git_version": hera_cal_version, "hera_cal_git_hash": hera_cal_hash,
-                             "pyuvdata_git_version": pyuvdata_version, "pyuvdata_git_hash": pyuvdata_hash}
-                filename = "pr_{0}_{1}.pkl".format(self.obs, str(int(gps_sec)))
-                with open(filename, 'w') as f:
-                    pickle.dump(info_dict, f)
+            # log to M&C
+            import mc_utils
+            mc_utils.add_process_event(self.obs, "finished")
+            mc_utils.add_process_record(self.obs, self.ts.wf.workflow_actions,
+                                        self.ts.wf.workflow_actions_endfile)
 
 
 class TaskClient:
@@ -704,10 +623,10 @@ class TaskServer(HTTPServer):
                 # calculate minutes since then
                 # use datetime for self-consistency...
                 now = datetime.datetime.now()
-                deltat_check = now - last_checkin
-                deltat_check_min = deltat_check.total_seconds() / 60
+                dt_check = now - last_checkin
+                dt_check_min = dt_check.total_seconds() / 60
             else:
-                deltat_check_min = 0.
+                dt_check_min = 0.
 
             # continue with checkin
             ip_addr = socket.gethostbyname(hostname)
@@ -718,34 +637,31 @@ class TaskServer(HTTPServer):
             time.sleep(10)
 
             if self.wf.log_to_mc:
-                from hera_mc.mc_session import MCSession
-                from hera_mc.mc_session import add_rtp_status
+                import mc_utils
 
-                # get rest of info
-                t = atime.Time.now()
+                # get general info
                 ncpu = psutil.cpu_count()
                 status = still.status
 
+                # get memory usage
                 vmem = psutil.virtual_memory()
-                # convert to GiB
                 vmem_tot = vmem.total / 1024 / 1024 / 1024
                 vmem_pct = vmem.percent
 
+                # get disk usage
                 du = psutil.disk_usage('/')
                 du_tot = du.total / 1024 / 1024 / 1024
                 du_pct = du.percent
 
+                # get time since boot in hr
                 boot_time = psutil.boot_time()
-                deltat_boot = now - boot_time
-                deltat_boot_hr = deltat_boot.total_seconds() / 60 / 60
+                dt_boot = now - boot_time
+                dt_boot_hr = dt_boot.total_seconds() / 60 / 60
 
-                # actually add to general MCSession and RTPStatus
-                mcs = MCSession()
-                mcs.add_server_status('rtp', hostname, ip_addr, t, ncpu, cpu_usage, vmem_pct,
-                                      vmem_tot, du_pct, du_tot)
-
-                add_rtp_status(t, status, deltat_check_min,
-                               ntasks, deltat_boot_hr)
+                # call functions for interacting with M&C
+                mc_utils.add_mc_server_status(hostname, ip_addr, ncpu, cpu_usage, vmem_pct,
+                                              vmem_tot, du_pct, du_tot)
+                mc_utils.add_mc_rtp_status(status, dt_check_min, ntasks, dt_boot_hr)
 
         return 0
 

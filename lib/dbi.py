@@ -4,12 +4,7 @@ import logging
 import psutil
 import datetime
 import numpy as np
-import math
-import astropy.time as atime
-import pickle
 from contextlib import contextmanager
-
-# from subprocess import Popen, PIPE
 
 from sqlalchemy import Table, BigInteger, Column, String, Integer, ForeignKey
 from sqlalchemy import Float, func, DateTime, BigInteger, Text
@@ -17,8 +12,6 @@ from sqlalchemy.orm import relationship, backref, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import create_engine
 from sqlalchemy.pool import StaticPool
-
-# from still_shared import logger
 
 # Based on example here:
 # http://www.pythoncentral.io/overview-sqlalchemys-expression-language-orm-queries/
@@ -423,25 +416,11 @@ class DataBaseInterface(object):
 
         # add to m&c
         try:
-            from hera_mc.mc_session import add_rtp_process_event
+            import mc_utils
         except ImportError:
             return obsnum
-
-        try:
-            t = atime.Time.now()
-            add_rtp_process_event(t, obsnum, 'queued')
-            return obsnum
-        except:
-            # PCL: this should not be a blanket 'except', but should be specific to
-            #      a "could not connect to db" exception
-
-            # want to save to disk for later import
-            gps_sec = math.floor(t.gps)
-            info_dict = {"time": t, "obsid": obsnum, "event": "queued"}
-            filname = "{0}_{1}.pkl".format(obsnum, str(int(gps_sec)))
-            with open(filename, 'w') as f:
-                pickle.dump(info_dict, f)
-
+        else:
+            mc_utils.add_process_event(obsnum, 'queued')
             return obsnum
 
     def add_file(self, obsnum, host, filename, path_prefix=None):
