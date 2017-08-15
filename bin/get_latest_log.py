@@ -5,7 +5,9 @@ Print out the latest log item associated with the specified obsnum.
 """
 from __future__ import absolute_import, division, print_function
 
-import argparse, os.path, sys
+import argparse
+import os.path
+import sys
 
 # Path futzing
 
@@ -18,7 +20,8 @@ from still import process_client_config_file, WorkFlow, SpawnerClass, StillDataB
 
 # Arguments
 
-parser = argparse.ArgumentParser(description='Get the latest log item associated with an observation.')
+parser = argparse.ArgumentParser(
+    description='Get the latest log item associated with an observation.')
 parser.add_argument('--config_file', dest='config_file', required=False, default=basedir + 'etc/still.cfg',
                     help="Path to the RTP config file")
 parser.add_argument('obsnum', type=str, metavar='OBSNUM',
@@ -33,7 +36,8 @@ wf = WorkFlow()
 
 sg.config_file = args.config_file
 process_client_config_file(sg, wf)
-dbi = StillDataBaseInterface(sg.dbhost, sg.dbport, sg.dbtype, sg.dbname, sg.dbuser, sg.dbpasswd, test=False)
+dbi = StillDataBaseInterface(
+    sg.dbhost, sg.dbport, sg.dbtype, sg.dbname, sg.dbuser, sg.dbpasswd, test=False)
 
 
 # Let's do it.

@@ -30,6 +30,7 @@ logger = True  # This is just here because the jedi syntax checker is dumb.
 MAXFAIL = 5  # Jon : move this into config
 TIME_INT_FOR_NEW_TM_CHECK = 90
 
+
 def file2jd(zenuv):
     return re.findall(r'\d+\.\d+', zenuv)[0]
 
@@ -38,10 +39,10 @@ def file2pol(zenuv):
     return re.findall(r'\.(.{2})\.', zenuv)[0]
 
 str2pol = {
-    'I' :  1,   # Stokes Paremeters
-    'Q' :  2,
-    'U' :  3,
-    'V' :  4,
+    'I': 1,   # Stokes Paremeters
+    'Q': 2,
+    'U': 3,
+    'V': 4,
     'rr': -1,   # Circular Polarizations
     'll': -2,
     'rl': -3,
@@ -53,7 +54,9 @@ str2pol = {
 }
 
 pol2str = {}
-for k in str2pol: pol2str[str2pol[k]] = k
+for k in str2pol:
+    pol2str[str2pol[k]] = k
+
 
 def action_cmp(x, y):
     return cmp(x.priority, y.priority)
@@ -62,8 +65,8 @@ def action_cmp(x, y):
 class Action:
     '''An Action performs a task on an observation, and is scheduled by a Scheduler.'''
 
-    def __init__(self, obs, task, neighbor_status, task_client, workflow, still, timeout=3600.):
-
+    def __init__(self, obs, task, neighbor_status,
+                 task_client, workflow, still, timeout=3600.):
         '''f:obs, task:target status,
         neighbor_status:status of adjacent obs (do not enter a status for a non-existent neighbor
         still:still action will run on.'''
@@ -88,19 +91,22 @@ class Action:
         s this action could not have been generated otherwise.'''
 
         try:
-            index1 = self.wf.workflow_actions.index(self.wf.action_prereqs[self.task][0])
+            index1 = self.wf.workflow_actions.index(
+                self.wf.action_prereqs[self.task][0])
         except:
             return True
         try:
-            index2 = self.wf.workflow_actions.index(self.wf.action_prereqs[self.task][1])
+            index2 = self.wf.workflow_actions.index(
+                self.wf.action_prereqs[self.task][1])
         except:
             index2 = None
 
         for status_of_neighbor in self.neighbor_status:
             if status_of_neighbor in (None, '', 'NEW'):
-                return False # obs not entered in DB or not ready for processing
+                return False  # obs not entered in DB or not ready for processing
 
-            index_of_neighbor_status = self.wf.workflow_actions.index(status_of_neighbor)
+            index_of_neighbor_status = self.wf.workflow_actions.index(
+                status_of_neighbor)
 
             if index1 is not None and index_of_neighbor_status < index1:
                 return False
@@ -115,7 +121,8 @@ class Action:
         if launch_time is None:
             launch_time = time.time()
         self.launch_time = launch_time
-        logger.debug('Action: launching (%s,%s) on still %s' % (self.task, self.obs, self.task_client.host_port[0]))
+        logger.debug('Action: launching (%s,%s) on still %s' %
+                     (self.task, self.obs, self.task_client.host_port[0]))
         return self.run_remote_task(action_type="NEW_TASK")
 
     def timed_out(self, curtime=None):
@@ -129,7 +136,8 @@ class Action:
             task = self.task
 
         logger.debug('Action: task_client(%s,%s)' % (task, self.obs))
-        connection_status, error_count = self.task_client.transmit(task, self.obs, action_type)
+        connection_status, error_count = self.task_client.transmit(
+            task, self.obs, action_type)
 
         return connection_status
 
@@ -150,14 +158,16 @@ class MonitorHandler(BaseHTTPRequestHandler):
             tm_info = self.server.dbi.get_still_info(still)
             logger.debug("connecting to TaskServer %s" % tm_info.ip_addr)
 
-            conn = httplib.HTTPConnection(tm_info.ip_addr, tm_info.port, timeout=20)
+            conn = httplib.HTTPConnection(
+                tm_info.ip_addr, tm_info.port, timeout=20)
             conn.request(conn_type, conn_path)
             response = conn.getresponse()
             response_status = response.status
             response_reason = response.reason
             response_data = response.read()
         except:
-            logger.exception("Could not connect to server %s on port : %s" % (tm_info.ip_addr, tm_info.port))
+            logger.exception("Could not connect to server %s on port : %s" % (
+                tm_info.ip_addr, tm_info.port))
         finally:
             conn.close()
         return response_data
@@ -170,22 +180,29 @@ class MonitorHandler(BaseHTTPRequestHandler):
         if parsed_path.path == "/":
             message = ""
             open_obs_count = len(self.server.dbi.list_open_observations())
-            failed_obs_count = len(self.server.dbi.list_observations_with_cur_stage('FAILED'))
-            killed_obs_count = len(self.server.dbi.list_observations_with_cur_stage('KILLED'))
-            completed_obs_count = len(self.server.dbi.list_observations_with_status('COMPLETE'))
+            failed_obs_count = len(
+                self.server.dbi.list_observations_with_cur_stage('FAILED'))
+            killed_obs_count = len(
+                self.server.dbi.list_observations_with_cur_stage('KILLED'))
+            completed_obs_count = len(
+                self.server.dbi.list_observations_with_status('COMPLETE'))
             message += "Open Obs count: %s  -  Completed Obs count : %s  -  Failed Obs count: %s  -  Killed Obs count: %s\n\n" % \
-                       (open_obs_count, completed_obs_count, failed_obs_count, killed_obs_count)
+                       (open_obs_count, completed_obs_count,
+                        failed_obs_count, killed_obs_count)
             for still in self.server.launched_actions:
                 tm_info = self.server.dbi.get_still_info(still)
                 message += "Host: %s - CPU Count: %s  - Load: %s%%  - Memory(used/tot): %s/%s GB - Task#(cur/max): %s/%s \n\n" % \
                            (still, tm_info.number_of_cores, tm_info.current_load, (tm_info.total_memory - tm_info.free_memory),
                             tm_info.total_memory, tm_info.cur_num_of_tasks, tm_info.max_num_of_tasks)
-                pickled_data_on_tasks = self.get_from_server(still, "INFO_TASKS")
+                pickled_data_on_tasks = self.get_from_server(
+                    still, "INFO_TASKS")
                 mydict = pickle.loads(pickled_data_on_tasks)
 
                 for mytask in mydict:
-                    dt = datetime.timedelta(seconds=(int(time.time() - mytask['start_time'])))
-                    dt_list = dt.days, dt.seconds // 3600, (dt.seconds // 60) % 60
+                    dt = datetime.timedelta(
+                        seconds=(int(time.time() - mytask['start_time'])))
+                    dt_list = dt.days, dt.seconds // 3600, (dt.seconds //
+                                                            60) % 60
                     message += "  * Obsnum: %s  -  Task: %s  -  Proc Status: %s  -  CPU: %s%%  -  Mem: %sMB  -  Runtime: %sd %sh %sm \n" % \
                                (mytask['obsnum'], mytask['task'], mytask['proc_status'],
                                 mytask['cpu_percent'], mytask['mem_used'] / (1024 ** 2), dt_list[0], dt_list[1], dt_list[2])
@@ -200,17 +217,21 @@ class Scheduler(ThreadingMixIn, HTTPServer):
     # A Scheduler reads a DataBaseInterface to determine what Actions can be
     # taken, and then schedules them on stills according to priority.'''
     ###
+
     def __init__(self, task_clients, workflow, sg):
 
         global logger
         logger = sg.logger
         self.myhostname = socket.gethostname()
 
-        HTTPServer.__init__(self, (self.myhostname, 8080), MonitorHandler)  # Class us into HTTPServer so we can make calls from TaskHandler into this class via self.server.
+        # Class us into HTTPServer so we can make calls from TaskHandler into
+        # this class via self.server.
+        HTTPServer.__init__(self, (self.myhostname, 8080), MonitorHandler)
         self.sg = sg  # Might as well have it around in case I find I need something from it...  Its just a little memory
         self.nstills = len(sg.hosts)  # preauto
         self.actions_per_still = sg.actions_per_still
-        self.transfers_per_still = sg.transfers_per_still  # Jon : This isn't used...
+        # Jon : This isn't used...
+        self.transfers_per_still = sg.transfers_per_still
         self.block_size = sg.block_size  # preauto
         self.timeout = sg.timeout
         self.sleep_time = sg.sleep_time
@@ -228,10 +249,13 @@ class Scheduler(ThreadingMixIn, HTTPServer):
         self.task_clients = {}
         self.stills = []
 
-        signal.signal(signal.SIGINT, self.signal_handler)  # Enabled clean shutdown after Cntrl-C event.
+        # Enabled clean shutdown after Cntrl-C event.
+        signal.signal(signal.SIGINT, self.signal_handler)
 
         logger.info("Starting monitoring interface.")
-        threading.Thread(target=self.serve_forever).start()  # Launch a thread of a multithreaded http server to view information on currently running tasks
+        # Launch a thread of a multithreaded http server to view information on
+        # currently running tasks
+        threading.Thread(target=self.serve_forever).start()
 
         # If task_clients is set to AUTO then check the db for still servers
         if task_clients[0].host_port[0] == "AUTO":
@@ -253,14 +277,17 @@ class Scheduler(ThreadingMixIn, HTTPServer):
         logger.debug("looking for TaskManagers...")
         self.stills = self.dbi.get_available_stills()
         while len(self.stills) < 1:
-            logger.debug("Can't find any TaskManagers! Waiting for 10sec and trying again")
+            logger.debug(
+                "Can't find any TaskManagers! Waiting for 10sec and trying again")
             time.sleep(10)
             self.stills = self.dbi.get_available_stills()
 
         for still in self.stills:
             if still.hostname not in self.task_clients:
-                logger.debug("Discovery of new TaskManager : %s" % still.hostname)
-                self.task_clients[still.hostname] = TaskClient(self.dbi, still.hostname, self.wf, still.port, self.sg)
+                logger.debug("Discovery of new TaskManager : %s" %
+                             still.hostname)
+                self.task_clients[still.hostname] = TaskClient(
+                    self.dbi, still.hostname, self.wf, still.port, self.sg)
                 self.launched_actions[still.hostname] = []
         return
 
@@ -270,7 +297,8 @@ class Scheduler(ThreadingMixIn, HTTPServer):
     def check_taskmanager(self, tm):
         tm_info = self.dbi.get_still_info(tm)
         since = datetime.datetime.now() - datetime.timedelta(minutes=3)
-        if tm_info.status != "OK" or tm_info.last_checkin < since:  # Status not OK or hasn't checked-in in over 3min.
+        # Status not OK or hasn't checked-in in over 3min.
+        if tm_info.status != "OK" or tm_info.last_checkin < since:
             logger.info("Removing offline TaskManager : %s" % tm_info.hostname)
             self.launched_actions.pop(tm_info.hostname, None)
             self.task_clients.pop(tm_info.hostname, None)
@@ -282,7 +310,8 @@ class Scheduler(ThreadingMixIn, HTTPServer):
 
             return False
 
-        elif tm_info.cur_num_of_tasks >= tm_info.max_num_of_tasks:  # Check to ensure we are not at max # of tasks for the taskmanager
+        # Check to ensure we are not at max # of tasks for the taskmanager
+        elif tm_info.cur_num_of_tasks >= tm_info.max_num_of_tasks:
             return False
 
         return True
@@ -294,7 +323,9 @@ class Scheduler(ThreadingMixIn, HTTPServer):
         ###
         self.user_input = InputThread()
         self.user_input.start()
-        self.initial_startup = True  # The scheduler is just starting, for the first run if we have new obs we need this to assign to proper taskmanagers
+        # The scheduler is just starting, for the first run if we have new obs
+        # we need this to assign to proper taskmanagers
+        self.initial_startup = True
         self.tm_cycle = cycle(self.stills)
         self.keep_running = True
         logger.info('Starting Scheduler')
@@ -306,7 +337,8 @@ class Scheduler(ThreadingMixIn, HTTPServer):
             if (time.time() - last_checked_for_stills) > TIME_INT_FOR_NEW_TM_CHECK:
                 self.find_all_taskmanagers()
                 last_checked_for_stills = time.time()
-                logger.debug("Number of TaskManagers : %s" % len(self.task_clients))
+                logger.debug("Number of TaskManagers : %s" %
+                             len(self.task_clients))
 
             self.ext_command_hook()
             self.get_new_active_obs()
@@ -316,15 +348,23 @@ class Scheduler(ThreadingMixIn, HTTPServer):
             # Launch actions that can be scheduled
             for tm in launched_actions_copy:
                 tm_info = self.dbi.get_still_info(tm)
-                if self.check_taskmanager(tm) is False:  # Check if the TaskManager is still available, if not it will pop it out
+                # Check if the TaskManager is still available, if not it will
+                # pop it out
+                if self.check_taskmanager(tm) is False:
                     continue
 
-                while len(self.get_launched_actions(tm, tx=False)) < tm_info.max_num_of_tasks:  # I think this will work
+                # I think this will work
+                while len(self.get_launched_actions(tm, tx=False)
+                          ) < tm_info.max_num_of_tasks:
                     # logger.debug("Number of launched actions : %s" % len(self.get_launched_actions(tm, tx=False)))
-                    action_from_queue = self.pop_action_queue(tm, tx=False)  # FIXME: MIght still be having a small issue when a TM goes offline and back on
+                    # FIXME: MIght still be having a small issue when a TM goes
+                    # offline and back on
+                    action_from_queue = self.pop_action_queue(tm, tx=False)
 
                     if action_from_queue is not False:
-                        if self.launch_action(action_from_queue) != "OK":  # If we had a connection error stop trying until TM checks back in
+                        # If we had a connection error stop trying until TM
+                        # checks back in
+                        if self.launch_action(action_from_queue) != "OK":
                             break
                     else:
                         break
@@ -336,7 +376,9 @@ class Scheduler(ThreadingMixIn, HTTPServer):
                 handle_keyboard_input(self, keyboard_input)
             else:
                 time.sleep(self.sleep_time)
-            self.initial_startup = False  # We've run once now, all obs were assigned via roundrobin if they were not previously
+            # We've run once now, all obs were assigned via roundrobin if they
+            # were not previously
+            self.initial_startup = False
         self.shutdown()
 
     def shutdown(self):
@@ -350,7 +392,8 @@ class Scheduler(ThreadingMixIn, HTTPServer):
         # get_all_neighbors: Go down (and up) the rabbit hole and find ALL the neighbors of a particular obsid
         ###
         neighbor_obs_nums = []
-        neighbor_obs_nums.append(obsnum)  # Go ahead and add the current obsid to the list
+        # Go ahead and add the current obsid to the list
+        neighbor_obs_nums.append(obsnum)
 
         low_obs, high_obs = self.dbi.get_neighbors(obsnum)
         while high_obs is not None:  # Traverse the list UP to find all neighbors above this one
@@ -386,7 +429,8 @@ class Scheduler(ThreadingMixIn, HTTPServer):
         return connection_status
 
     def kill_action(self, a):
-        logger.info('Scheduler.kill_action: called on (%s,%s)' % (a.task, a.obs))
+        logger.info('Scheduler.kill_action: called on (%s,%s)' %
+                    (a.task, a.obs))
         connection_status = a.run_remote_task(action_type="KILL_TASK")
         return connection_status
 
@@ -406,10 +450,12 @@ class Scheduler(ThreadingMixIn, HTTPServer):
                     self.failcount[str(action.obs) + status] = 0
 
                 if status == action.task:
-                    logger.info('Task %s for obs %s on still %s completed successfully.' % (action.task, action.obs, still))
+                    logger.info('Task %s for obs %s on still %s completed successfully.' % (
+                        action.task, action.obs, still))
 
                 elif action.timed_out():
-                    logger.info('Task %s for obs %s on still %s TIMED OUT.' % (action.task, action.obs, still))
+                    logger.info('Task %s for obs %s on still %s TIMED OUT.' % (
+                        action.task, action.obs, still))
                     if self.kill_action(action) != "OK":
                         break
                     self.failcount[str(action.obs) + status] += 1
@@ -417,7 +463,8 @@ class Scheduler(ThreadingMixIn, HTTPServer):
 
                 elif pid == -9:
                     self.failcount[str(action.obs) + status] += 1
-                    logger.info('Task %s for obs %s on still %s HAS DIED. failcount=%d' % (action.task, action.obs, still, self.failcount[str(action.obs) + status]))
+                    logger.info('Task %s for obs %s on still %s HAS DIED. failcount=%d' % (
+                        action.task, action.obs, still, self.failcount[str(action.obs) + status]))
 
                 else:  # still active
                     updated_actions.append(action)
@@ -441,7 +488,8 @@ class Scheduler(ThreadingMixIn, HTTPServer):
         observations = []
         observations += self.dbi.list_open_observations_on_tm()
         for tm_name in self.launched_actions:
-            observations += self.dbi.list_open_observations_on_tm(tm_hostname=tm_name)
+            observations += self.dbi.list_open_observations_on_tm(
+                tm_hostname=tm_name)
 
         for open_obs in observations:
             if open_obs not in self.active_obs_dict:
@@ -457,20 +505,26 @@ class Scheduler(ThreadingMixIn, HTTPServer):
         actions = []
         for myobs in self.active_obs:
             myobs_info = self.dbi.get_obs(myobs)
-            if myobs_info.current_stage_in_progress == "FAILED" or myobs_info.current_stage_in_progress == "KILLED" or myobs_info.status == "COMPLETE" or (myobs_info.stillhost not in self.task_clients and myobs_info.stillhost):
+            if myobs_info.current_stage_in_progress == "FAILED" or myobs_info.current_stage_in_progress == "KILLED" or myobs_info.status == "COMPLETE" or (
+                    myobs_info.stillhost not in self.task_clients and myobs_info.stillhost):
                 self.active_obs_dict.pop(myobs_info.obsnum)
                 self.active_obs.remove(myobs_info.obsnum)
 
-                logger.debug("update_action_queue: Removing obsid : %s, task : %s, Status: %s, TM: %s" % (myobs_info.obsnum, myobs_info.current_stage_in_progress, myobs_info.status, myobs_info.stillhost))
+                logger.debug("update_action_queue: Removing obsid : %s, task : %s, Status: %s, TM: %s" % (
+                    myobs_info.obsnum, myobs_info.current_stage_in_progress, myobs_info.status, myobs_info.stillhost))
             else:
-                myaction = self.get_action(myobs, ActionClass=ActionClass, action_args=action_args)
-                if (myaction is not None) and (self.already_launched(myaction) is not True):
+                myaction = self.get_action(
+                    myobs, ActionClass=ActionClass, action_args=action_args)
+                if (myaction is not None) and (
+                        self.already_launched(myaction) is not True):
                     if self.wf.prioritize_obs == 1:
-                        myaction.set_priority(self.determine_priority(myaction))
+                        myaction.set_priority(
+                            self.determine_priority(myaction))
 
                     actions.append(myaction)
 
-        actions.sort(action_cmp, reverse=True)  # place most important actions first
+        # place most important actions first
+        actions.sort(action_cmp, reverse=True)
         self.action_queue = actions  # completely throw out previous action list
 
         return
@@ -489,7 +543,8 @@ class Scheduler(ThreadingMixIn, HTTPServer):
             return None
 
         if status == 'COMPLETE':
-            # logger.debug("COMPLETE for obsid : %s" % obsnum)  # You can see how often completeds are checked by uncommenting this.. its a LOT
+            # logger.debug("COMPLETE for obsid : %s" % obsnum)  # You can see
+            # how often completeds are checked by uncommenting this.. its a LOT
             return None  # obs is complete
 
         if status == '' or status == 'NEW':
@@ -499,7 +554,8 @@ class Scheduler(ThreadingMixIn, HTTPServer):
         # Check that the still assigned to the obs is currently in the list of active stills
         # !!!!FIXME!!!  - Maybe fixed?
         if obsinfo.stillhost is not None:
-            if any(still for still in self.stills if still.hostname == obsinfo.stillhost):
+            if any(still for still in self.stills if still.hostname ==
+                   obsinfo.stillhost):
                 pass
             else:
                 return None
@@ -508,13 +564,15 @@ class Scheduler(ThreadingMixIn, HTTPServer):
 
             if None in neighbors:
                 cur_step_index = self.wf.workflow_actions_endfile.index(status)
-                next_step = self.wf.workflow_actions_endfile[cur_step_index + 1]
+                next_step = self.wf.workflow_actions_endfile[
+                    cur_step_index + 1]
 
             else:  # this is a normal file
                 cur_step_index = self.wf.workflow_actions.index(status)
                 next_step = self.wf.workflow_actions[cur_step_index + 1]
 
-            neighbor_status = [self.dbi.get_obs_status(n) for n in neighbors if n is not None]
+            neighbor_status = [self.dbi.get_obs_status(
+                n) for n in neighbors if n is not None]
         elif self.wf.pol_neighbors == 1:
             pol_neighbors = self.dbi.get_pol_neighbors(obsnum)
 
@@ -530,7 +588,8 @@ class Scheduler(ThreadingMixIn, HTTPServer):
                 cur_step_index = self.wf.workflow_actions_endfile.index(status)
                 next_step = self.workflow_actions_endfile[cur_step_index + 1]
 
-            neighbor_status = [self.dbi.get_obs_status(n) for n in pol_neighbors if n is not None]
+            neighbor_status = [self.dbi.get_obs_status(
+                n) for n in pol_neighbors if n is not None]
         else:
             cur_step_index = self.wf.workflow_actions.index(status)
             next_step = self.wf.workflow_actions[cur_step_index + 1]
@@ -544,11 +603,13 @@ class Scheduler(ThreadingMixIn, HTTPServer):
                 still = self.tm_cycle.next().hostname  # Balance out all the nodes on startup
             else:
 
-                still = self.obs_to_still(obsnum)  # Get a still for a new obsid if one doesn't already exist.
+                # Get a still for a new obsid if one doesn't already exist.
+                still = self.obs_to_still(obsnum)
                 if still is False:
                     return None
 
-            self.dbi.set_obs_still_host(obsnum, still)  # Assign the still to the obsid
+            # Assign the still to the obsid
+            self.dbi.set_obs_still_host(obsnum, still)
 
             if self.lock_all_neighbors_to_same_still == 1:
                 if self.wf.neighbors == 1:
@@ -562,7 +623,8 @@ class Scheduler(ThreadingMixIn, HTTPServer):
             if ActionClass is None:
                 ActionClass = Action
 
-            a = ActionClass(obsnum, next_step, neighbor_status, self.task_clients[still], self.wf, still, timeout=self.timeout)
+            a = ActionClass(obsnum, next_step, neighbor_status, self.task_clients[
+                            still], self.wf, still, timeout=self.timeout)
             if self.wf.neighbors == 1:
                 if a.has_prerequisites() is True:
                     return a
@@ -577,9 +639,11 @@ class Scheduler(ThreadingMixIn, HTTPServer):
     def determine_priority(self, action):
         '''Assign a priority to an action based on its status and the time
         order of the obs to which this action is attached.'''
-        jdcnt = (float(file2jd(action.obs))- 2415020)/0.005 #get the jd and convert to an integer (0.005 is the length of a typical PAPER obs)
+        jdcnt = (float(file2jd(action.obs)) - 2415020) / \
+            0.005  # get the jd and convert to an integer (0.005 is the length of a typical PAPER obs)
         pol = str2pol[file2pol(action.obs)]
-        #pol, jdcnt = int(action.obs) / 2 ** 32, int(action.obs) % 2 ** 32  # XXX maybe not make this have to explicitly match dbi bits
+        # pol, jdcnt = int(action.obs) / 2 ** 32, int(action.obs) % 2 ** 32  #
+        # XXX maybe not make this have to explicitly match dbi bits
         return jdcnt * 4 + pol  # prioritize first by time, then by pol
         # XXX might want to prioritize finishing a obs already started before
         # moving to the latest one (at least, up to a point) to avoid a
@@ -598,7 +662,8 @@ class Scheduler(ThreadingMixIn, HTTPServer):
             if mystill in self.task_clients:
                 return mystill
             else:  # We couldn't find its still server as its not in task_clients for whatever reason so punt for now
-                logger.debug("Obs attached to non-existant STILL OBS : %s, STILL %s" % (obs, mystill))
+                logger.debug(
+                    "Obs attached to non-existant STILL OBS : %s, STILL %s" % (obs, mystill))
                 return 0
         else:
             still = self.dbi.get_most_available_still()

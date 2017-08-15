@@ -13,7 +13,8 @@ from flask import Flask
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.login import LoginManager
 
-monitor_app = Flask(__name__, static_folder='monitor/static', template_folder='monitor/templates')
+monitor_app = Flask(__name__, static_folder='monitor/static',
+                    template_folder='monitor/templates')
 monitor_app.config.from_pyfile('monitor/settings.py')
 
 monitor_lm = LoginManager()

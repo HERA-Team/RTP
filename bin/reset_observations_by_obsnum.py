@@ -4,7 +4,9 @@ Reset observations identified by their "obsnums", which are not necessarily
 actually numbers.
 
 """
-import argparse, os.path, sys
+import argparse
+import os.path
+import sys
 
 # Path futzing
 
@@ -17,7 +19,8 @@ from still import process_client_config_file, WorkFlow, SpawnerClass, StillDataB
 
 # Arguments
 
-parser = argparse.ArgumentParser(description='Reset RTP observations with the given obsnums.')
+parser = argparse.ArgumentParser(
+    description='Reset RTP observations with the given obsnums.')
 
 parser.add_argument('--status', dest='status', required=False, default='',
                     help='set the observation to this status; default will be the first workflow action')
@@ -40,20 +43,23 @@ process_client_config_file(sg, wf)
 if args.status == '':
     args.status = wf.workflow_actions[0]
 
-dbi = StillDataBaseInterface(sg.dbhost, sg.dbport, sg.dbtype, sg.dbname, sg.dbuser, sg.dbpasswd, test=False)
+dbi = StillDataBaseInterface(
+    sg.dbhost, sg.dbport, sg.dbtype, sg.dbname, sg.dbuser, sg.dbpasswd, test=False)
 
 # Let's do it.
 
 try:
     s = dbi.Session()
-    obsnums = [o.obsnum for o in s.query(Observation).filter(Observation.obsnum.in_ (args.obsnums))]
+    obsnums = [o.obsnum for o in s.query(Observation).filter(
+        Observation.obsnum.in_(args.obsnums))]
     s.close()
 
     for obsnum in obsnums:
         dbi.set_obs_status(obsnum, args.status)
         dbi.set_obs_pid(obsnum, None)
         dbi.set_obs_still_host(obsnum, None)
-        dbi.add_log(obsnum, args.status, "resetting (reset_observations_by_obsnum)", 0)
+        dbi.add_log(obsnum, args.status,
+                    "resetting (reset_observations_by_obsnum)", 0)
         dbi.update_obs_current_stage(obsnum, None)
 except Exception as e:
     print("error: %s") % e

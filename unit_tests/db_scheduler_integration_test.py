@@ -74,7 +74,8 @@ class NullAction(sch.Action):
 class PopulatedDataBaseInterface(DataBaseInterface):
 
     def __init__(self, nobs, npols, test=True):
-        DataBaseInterface.__init__(self, dbhost="localhost", dbport="5432", dbtype="postgresql", dbname="test", dbuser="test", dbpasswd="testme")
+        DataBaseInterface.__init__(self, dbhost="localhost", dbport="5432",
+                                   dbtype="postgresql", dbname="test", dbuser="test", dbpasswd="testme")
         # DataBaseInterface.__init__(self, "", "", "", "", "", "", test=True)
 
         self.length = 10 / 60. / 24
@@ -94,7 +95,8 @@ class PopulatedDataBaseInterface(DataBaseInterface):
                 continue
             for jdi in xrange(len(jds)):
                 obsnum = jdpol2obsnum(jdi, pol, self.length)
-                self.delete_obs(str(obsnum))  # Delete obseration if it exists before adding a new one
+                # Delete obseration if it exists before adding a new one
+                self.delete_obs(str(obsnum))
 
                 obslist.append({'obsnum': str(obsnum),
                                 'outputhost': "UNITTEST",
@@ -127,8 +129,7 @@ class FakeDataBaseInterface:
         return int(filename)
 
     def list_observations(self):
-        files = self.files.keys()
-        files.sort()
+        files = sorted(self.files.keys())
         return files
 
     def get_neighbors(self, filename):
@@ -154,13 +155,15 @@ class TestSchedulerDB(unittest.TestCase):
     def setUp(self):
         self.ntimes = 10
         self.npols = 4
-        self.dbi = PopulatedDataBaseInterface(self.ntimes, self.npols, test=True)
+        self.dbi = PopulatedDataBaseInterface(
+            self.ntimes, self.npols, test=True)
         self.files = self.dbi.list_observations()
         self.sg = SpawnerClass()
         self.sg.config_file = "still_test_paper.cfg"
         self.wf = WorkFlow()
         process_client_config_file(self.sg, self.wf)
-        self.task_clients = [TaskClient(self.dbi, 'localhost', self.wf, port=TEST_PORT)]
+        self.task_clients = [TaskClient(
+            self.dbi, 'localhost', self.wf, port=TEST_PORT)]
 
     def test_populated(self):  # do a couple of quick checks on my db population
         obsnums = self.dbi.list_observations()
@@ -169,7 +172,8 @@ class TestSchedulerDB(unittest.TestCase):
 
     def test_get_new_active_obs(self):
         # s = sch.Scheduler(nstills=1, actions_per_still=1, blocksize=10)
-        s = sch.Scheduler(self.task_clients, self.wf, nstills=1, actions_per_still=1, blocksize=10)
+        s = sch.Scheduler(self.task_clients, self.wf, nstills=1,
+                          actions_per_still=1, blocksize=10)
         tic = time.time()
         s.get_new_active_obs(self.dbi)
         print("time to execute get_new_active_obs: %s") % (time.time() - tic)
@@ -180,12 +184,14 @@ class TestSchedulerDB(unittest.TestCase):
         """
         obsnum = self.files[5]
         # s = sch.Scheduler(nstills=1, actions_per_still=1)
-        s = sch.Scheduler(self.task_clients, self.wf, nstills=1, actions_per_still=1, blocksize=10)
+        s = sch.Scheduler(self.task_clients, self.wf, nstills=1,
+                          actions_per_still=1, blocksize=10)
         tic = time.time()
         a = s.get_action(self.dbi, obsnum, ActionClass=NullAction)
         print("time to execute get_action: %s") % (time.time() - tic)
         self.assertNotEqual(a, None)  # everything is actionable in this test
-        self.assertEqual(a.task, FILE_PROCESSING_LINKS[self.dbi.defaultstatus])  # check this links to the next step
+        # check this links to the next step
+        self.assertEqual(a.task, FILE_PROCESSING_LINKS[self.dbi.defaultstatus])
 
     def test_start(self):
         self.dbi = PopulatedDataBaseInterface(3, 1, test=True)
@@ -207,11 +213,13 @@ class TestSchedulerDB(unittest.TestCase):
                 return True
 
         # s = sch.Scheduler(nstills=1, actions_per_still=1, blocksize=10)
-        s = sch.Scheduler(self.task_clients, self.wf, nstills=1, actions_per_still=1, blocksize=10)
+        s = sch.Scheduler(self.task_clients, self.wf, nstills=1,
+                          actions_per_still=1, blocksize=10)
         t = threading.Thread(target=s.start, args=(self.dbi, SuccessAction))
         t.start()
         tstart = time.time()
-        completion_time = len(FILE_PROCESSING_STAGES) * 3 * 0.2  # 0.2 s per file per step
+        completion_time = len(FILE_PROCESSING_STAGES) * \
+            3 * 0.2  # 0.2 s per file per step
         # print "time to completion:",completion_time,'s'
         while not all_done():
             if time.time() - tstart > completion_time:
@@ -233,10 +241,12 @@ class TestSchedulerDB(unittest.TestCase):
             def run_remote_task(me):
                 me.dbi = self.dbi
                 me.dbi.set_obs_status(me.obs, me.task)
-                print("Action has status: %s") % (me.dbi.get_obs_status(me.obs))
+                print("Action has status: %s") % (
+                    me.dbi.get_obs_status(me.obs))
                 return None
         # s = sch.Scheduler(nstills=1, actions_per_still=1, blocksize=10)
-        s = sch.Scheduler(self.task_clients, self.wf, nstills=1, actions_per_still=1, blocksize=10)
+        s = sch.Scheduler(self.task_clients, self.wf, nstills=1,
+                          actions_per_still=1, blocksize=10)
         s.get_new_active_obs(self.dbi)
         s.update_action_queue(self.dbi, ActionClass=SuccessAction)
         a = s.pop_action_queue(0)

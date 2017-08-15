@@ -46,7 +46,8 @@ def handle_keyboard_input(self, keyboard_input):
         self.keep_running = False
         self.shutdown()
     elif keyboard_input == 'p':
-        raw_input("The primary process is paused, this does not include threads, press <enter> to continue")
+        raw_input(
+            "The primary process is paused, this does not include threads, press <enter> to continue")
         print("Normal activity has resumed.")
     self.user_input = InputThread()
     self.user_input.start()

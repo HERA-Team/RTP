@@ -55,7 +55,8 @@ wf = WorkFlow()
 
 sg.config_file = args.config_file
 process_client_config_file(sg, wf)
-dbi = StillDataBaseInterface(sg.dbhost, sg.dbport, sg.dbtype, sg.dbname, sg.dbuser, sg.dbpasswd, test=False)
+dbi = StillDataBaseInterface(
+    sg.dbhost, sg.dbport, sg.dbtype, sg.dbname, sg.dbuser, sg.dbpasswd, test=False)
 
 # connect to the database
 if args.debug:
@@ -79,25 +80,32 @@ Nobs = s.query(Observation).count()
 Nprogress = s.query(Observation).filter(Observation.status != 'NEW', Observation.status != wf.workflow_actions[0],
                                         Observation.status != 'COMPLETE').count()
 
-Ncomplete = s.query(Observation).filter(Observation.status == 'COMPLETE').count()
+Ncomplete = s.query(Observation).filter(
+    Observation.status == 'COMPLETE').count()
 print "Total observations in still:", Nobs
 print "Number complete:", Ncomplete
 print "Number in progress:", Nprogress
 print "broken down by night [most recent activity]"
 pending = 0
 for night in nights:
-    Night_complete = s.query(Observation).filter(Observation.date.like(str(night) + '%'), Observation.status == 'COMPLETE').count()
-    Night_total = s.query(Observation).filter(Observation.date.like(str(night) + '%')).count()
-    OBSs = s.query(Observation).filter(Observation.date.like(str(night) + '%')).all()
+    Night_complete = s.query(Observation).filter(Observation.date.like(
+        str(night) + '%'), Observation.status == 'COMPLETE').count()
+    Night_total = s.query(Observation).filter(
+        Observation.date.like(str(night) + '%')).count()
+    OBSs = s.query(Observation).filter(
+        Observation.date.like(str(night) + '%')).all()
     obsnums = [OBS.obsnum for OBS in OBSs]
     if s.query(Log).filter(Log.obsnum.in_(obsnums)).count() < 1 and args.debug:
         print night, ':', 'completeness', 0, '/', Night_total, '[Pending]'
-    pending = s.query(Log).filter(Log.obsnum.in_(obsnums), Observation.status != 'COMPLETE').count()
+    pending = s.query(Log).filter(Log.obsnum.in_(obsnums),
+                                  Observation.status != 'COMPLETE').count()
     try:
-        LOG = s.query(Log).filter(Log.obsnum.in_(obsnums)).order_by(Log.timestamp.desc()).one()
+        LOG = s.query(Log).filter(Log.obsnum.in_(obsnums)
+                                  ).order_by(Log.timestamp.desc()).one()
         if LOG.timestamp > (datetime.utcnow() - timedelta(5.0)) or args.debug:
             print night, ':', 'completeness', Night_complete, '/', Night_total, LOG.timestamp
-        FAIL_LOGs = s.query(Log).filter(Log.exit_status > 0, Log.timestamp > (datetime.utcnow() - timedelta(0.5))).all()
+        FAIL_LOGs = s.query(Log).filter(Log.exit_status > 0, Log.timestamp > (
+            datetime.utcnow() - timedelta(0.5))).all()
         logger.debug("found %d FAILURES" % len(FAIL_LOGs))
         fail_obsnums = [LOG_ENTRY.obsnum for LOG_ENTRY in FAIL_LOGs]
     except:
@@ -114,17 +122,21 @@ print("fails in the last 12 hours")
 if len(fail_obsnums) < 1:
     print("None")
 else:
-    FAIL_OBSs = s.query(Observation).filter(Observation.obsnum.in_(fail_obsnums)).all()
-    fail_stills = list(set([OBS.stillhost for OBS in FAIL_OBSs]))  # list of stills with fails
+    FAIL_OBSs = s.query(Observation).filter(
+        Observation.obsnum.in_(fail_obsnums)).all()
+    # list of stills with fails
+    fail_stills = list(set([OBS.stillhost for OBS in FAIL_OBSs]))
     for fail_still in fail_stills:
         # get failed obsnums broken down by still
-        fail_count = s.query(Observation).filter(Observation.obsnum.in_(fail_obsnums), Observation.stillhost == fail_still).count()
+        fail_count = s.query(Observation).filter(Observation.obsnum.in_(
+            fail_obsnums), Observation.stillhost == fail_still).count()
         print("Fail Still : %s , Fail Count %s") % (fail_still, fail_count)
     print("most recent fails")
     for FAIL_OBS in FAIL_OBSs:
         print FAIL_OBS.obsnum, FAIL_OBS.status, FAIL_OBS.stillhost
 print "Number of observations completed in the last 24 hours"
-good_obscount = s.query(Log).filter(Log.exit_status == 0, Log.timestamp > (datetime.utcnow() - timedelta(1.0)), Log.stage == 'CLEAN_UVCRE').count()  # HARDWF
+good_obscount = s.query(Log).filter(Log.exit_status == 0, Log.timestamp > (
+    datetime.utcnow() - timedelta(1.0)), Log.stage == 'CLEAN_UVCRE').count()  # HARDWF
 print("Good count: %s") % good_obscount
 s.close()
 sys.exit(0)

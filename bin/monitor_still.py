@@ -38,7 +38,8 @@ sg.config_file = config_file
 process_client_config_file(sg, wf)
 
 dbi = get_dbi_from_config(config_file)
-dbi.test_db()  # Testing the database to make sure we made a connection, its fun..
+# Testing the database to make sure we made a connection, its fun..
+dbi.test_db()
 
 stdscr.addstr("DiStiller Status Board. Monitoring")
 stdscr.addstr(1, 0, "Press 'q' to exit")
@@ -51,7 +52,7 @@ colwidth = 50
 obslines = 20
 stat = ['\\', '|', '/', '-', '.']
 i = 0
-#try:
+# try:
 
 while(1):
     s = dbi.Session()
@@ -62,29 +63,39 @@ while(1):
 
 #    stills = dbi.get_available_stills()
     since = datetime.datetime.now() - datetime.timedelta(minutes=3)
-    stills = s.query(Still).filter(Still.last_checkin > since, Still.status == "OK")
+    stills = s.query(Still).filter(
+        Still.last_checkin > since, Still.status == "OK")
 
     # stills = []
     totalobs = s.query(Observation).count()
-    stdscr.addstr(curline, 0, "Number of observations currently in the database: {totalobs}".format(totalobs=totalobs))
+    stdscr.addstr(curline, 0, "Number of observations currently in the database: {totalobs}".format(
+        totalobs=totalobs))
     curline += 1
-    OBSs = s.query(Observation).filter(Observation.current_stage_in_progress != "", Observation.status != 'COMPLETE', Observation.currentpid > 0).all()  # HARDWF
-    POTCOUNT = s.query(Observation).filter(Observation.status == wf.workflow_actions[0], Observation.current_stage_in_progress == "").count()  # HARDWF
-    failed_obs = s.query(Observation).filter(Observation.current_stage_in_progress == "FAILED").order_by(Observation.current_stage_start_time)
-    killed_obs = s.query(Observation).filter(Observation.current_stage_in_progress == "KILLED").order_by(Observation.current_stage_start_time)
+    OBSs = s.query(Observation).filter(Observation.current_stage_in_progress != "",
+                                       Observation.status != 'COMPLETE', Observation.currentpid > 0).all()  # HARDWF
+    POTCOUNT = s.query(Observation).filter(Observation.status == wf.workflow_actions[
+        0], Observation.current_stage_in_progress == "").count()  # HARDWF
+    failed_obs = s.query(Observation).filter(
+        Observation.current_stage_in_progress == "FAILED").order_by(Observation.current_stage_start_time)
+    killed_obs = s.query(Observation).filter(
+        Observation.current_stage_in_progress == "KILLED").order_by(Observation.current_stage_start_time)
     log_entries = s.query(Log).order_by(Log.timestamp).limit(10)
     obsnums = [OBS.obsnum for OBS in OBSs]
     obshosts = [OBS.stillhost for OBS in OBSs]
     hosts = list(set(obshosts))
 
-    stdscr.addstr(curline, 0, "Number of observations currently being processed: {num}".format(num=len(obsnums)))
+    stdscr.addstr(curline, 0, "Number of observations currently being processed: {num}".format(
+        num=len(obsnums)))
     curline += 1
-    stdscr.addstr(curline, 0, "Observations waiting to be processed: {num}".format(num=POTCOUNT))
+    stdscr.addstr(
+        curline, 0, "Observations waiting to be processed: {num}".format(num=POTCOUNT))
     curline += 2
     for still in stills:
-        stdscr.addstr(curline, 0, "Still : %s, DataDir : %s, CPU LOAD : %s" % (still.hostname, still.data_dir, still.current_load))
+        stdscr.addstr(curline, 0, "Still : %s, DataDir : %s, CPU LOAD : %s" % (
+            still.hostname, still.data_dir, still.current_load))
         curline += 1
-        obs_on_still = s.query(Observation).filter(Observation.stillhost == still.hostname)
+        obs_on_still = s.query(Observation).filter(
+            Observation.stillhost == still.hostname)
 
         for obs in obs_on_still:
             if obs.current_stage_in_progress != "KILLED" and obs.current_stage_in_progress != "FAILED":
@@ -92,7 +103,8 @@ while(1):
                               % (obs.obsnum, obs.current_stage_in_progress, obs.currentpid, obs.current_stage_start_time))
                 curline += 1
     curline += 1
-    stdscr.addstr(curline, 0, "                     Killed Observations: %s   |    Failed Observations : %s" % (killed_obs.count(), failed_obs.count()))
+    stdscr.addstr(curline, 0, "                     Killed Observations: %s   |    Failed Observations : %s" % (
+        killed_obs.count(), failed_obs.count()))
     curline += 2
     for killed in killed_obs:
         stdscr.addstr(curline, 0, "Obs# : %s, Current completed stage : %s,  Time of last attempt : %s,  Status of last attempt : %s"
@@ -103,7 +115,8 @@ while(1):
                       % (failed.obsnum, failed.status, failed.current_stage_start_time, failed.current_stage_in_progress))
         curline += 1
     curline += 2
-    stdscr.addstr(curline, 0, "                     ----   Most recent log entries   ----")
+    stdscr.addstr(
+        curline, 0, "                     ----   Most recent log entries   ----")
     curline += 2
     for entry in log_entries:
         stdscr.addstr(curline, 0, "Obs# : %s, Stage: %s, Exit Status : %s, TimeStamp : %s, Message : %s"

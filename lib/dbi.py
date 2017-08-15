@@ -20,13 +20,15 @@ from sqlalchemy.pool import StaticPool
 
 # from still_shared import logger
 
-# Based on example here: http://www.pythoncentral.io/overview-sqlalchemys-expression-language-orm-queries/
+# Based on example here:
+# http://www.pythoncentral.io/overview-sqlalchemys-expression-language-orm-queries/
 Base = declarative_base()
 
 # Jon : Not sure why the logger is defined here?
 
 logger = logging.getLogger('dbi')
-formating = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+formating = logging.Formatter(
+    '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger.setLevel(logging.DEBUG)
 
 ch = logging.StreamHandler()
@@ -47,7 +49,8 @@ logger.addHandler(ch)
 
 
 def jdpol2obsnum(jd, pol, djd):
-    # Jon : I think at some point I want to move this function to a paper specific file
+    # Jon : I think at some point I want to move this function to a paper
+    # specific file
     """
     input: julian date float, pol string. and length of obs in fraction of julian date
     output: a unique index
@@ -70,15 +73,20 @@ def jdpol2obsnum(jd, pol, djd):
 ########
 
 neighbors = Table("neighbors", Base.metadata,
-                  Column("low_neighbor_id", String(100), ForeignKey("observation.obsnum"), primary_key=True),
-                  Column("high_neighbor_id", String(100), ForeignKey("observation.obsnum"), primary_key=True)
+                  Column("low_neighbor_id", String(100), ForeignKey(
+                      "observation.obsnum"), primary_key=True),
+                  Column("high_neighbor_id", String(100), ForeignKey(
+                      "observation.obsnum"), primary_key=True)
                   )
 
 
 class Observation(Base):
     __tablename__ = 'observation'
-    # date = Column(BigInteger)  # Jon: Changed this to a biginteger for now... Though I can probably just pad my date
-    date = Column(String(100))  # Jon: Changed this to a biginteger for now... Though I can probably just pad my date
+    # date = Column(BigInteger)  # Jon: Changed this to a biginteger for
+    # now... Though I can probably just pad my date
+    # Jon: Changed this to a biginteger for now... Though I can probably just
+    # pad my date
+    date = Column(String(100))
     date_type = Column(String(100))
     pol = Column(String(4))
     # JON: removed default=updateobsnum, late, should figure out how to just override the alchamy base class thinggie.
@@ -86,7 +94,8 @@ class Observation(Base):
     # obsnum = Column(BigInteger, primary_key=True)
     obsnum = Column(String(100), primary_key=True)
     # status = Column(Enum(*FILE_PROCESSING_STAGES, name='FILE_PROCESSING_STAGES'))
-    # Jon: There may be a very good reason to not just make this a string and I'm sure I will find out what it is soon enough
+    # Jon: There may be a very good reason to not just make this a string and
+    # I'm sure I will find out what it is soon enough
     status = Column(String(200))
     # last_update = Column(DateTime,server_default=func.now(),onupdate=func.current_timestamp())
     length = Column(Float)  # length of observation in fraction of a day
@@ -115,7 +124,8 @@ class File(Base):
     obsnum = Column(String(100), ForeignKey('observation.obsnum'))
     # this next line creates an attribute Observation.files which is the list of all
     #  files associated with this observation
-    observation = relationship(Observation, backref=backref('files', uselist=True), cascade="all, delete-orphan", single_parent=True)
+    observation = relationship(Observation, backref=backref(
+        'files', uselist=True), cascade="all, delete-orphan", single_parent=True)
     md5sum = Column(Integer)
 
 
@@ -124,14 +134,16 @@ class Log(Base):
     lognum = Column(BigInteger, primary_key=True)
 #    obsnum = Column(BigInteger, ForeignKey('observation.obsnum'))
     # Jon: obsnum = Column(String(100), ForeignKey('observation.obsnum'))
-    # Jon: There may be a very good reason to not just make this a string and I'm sure I will find out what it is soon enough
+    # Jon: There may be a very good reason to not just make this a string and
+    # I'm sure I will find out what it is soon enough
     obsnum = Column(String(100))
     stage = Column(String(200))
     # stage = Column(Enum(*FILE_PROCESSING_STAGES, name='FILE_PROCESSING_STAGES'))
     exit_status = Column(Integer)
     start_time = Column(DateTime)
     end_time = Column(DateTime)
-    timestamp = Column(DateTime, nullable=False, default=func.current_timestamp())
+    timestamp = Column(DateTime, nullable=False,
+                       default=func.current_timestamp())
     logtext = Column(Text)
     # observation = relationship(Observation, backref=backref('logs', uselist=True), cascade="all, delete-orphan", single_parent=True)
 
@@ -142,7 +154,8 @@ class Still(Base):
     ip_addr = Column(String(50))
     port = Column(BigInteger)
     data_dir = Column(String(200))
-    last_checkin = Column(DateTime, default=datetime.datetime.now(), onupdate=datetime.datetime.now())
+    last_checkin = Column(
+        DateTime, default=datetime.datetime.now(), onupdate=datetime.datetime.now())
     status = Column(String(100))
     current_load = Column(Integer)
     number_of_cores = Column(Integer)  # Jon : Placeholder for future expansion
@@ -150,11 +163,13 @@ class Still(Base):
     total_memory = Column(Integer)     # Jon : Placeholder for future expansion
     cur_num_of_tasks = Column(Integer)
     max_num_of_tasks = Column(Integer)
-    free_disk = Column(BigInteger) # measured in bytes
+    free_disk = Column(BigInteger)  # measured in bytes
 
 
 class DataBaseInterface(object):
-    def __init__(self, dbhost="", dbport="", dbtype="", dbname="", dbuser="", dbpasswd="", test=False):
+
+    def __init__(self, dbhost="", dbport="", dbtype="",
+                 dbname="", dbuser="", dbpasswd="", test=False):
         """
         Connect to the database and initiate a session creator.
          or
@@ -163,22 +178,26 @@ class DataBaseInterface(object):
 
         if test:
             self.engine = create_engine('sqlite:///',
-                                        connect_args={'check_same_thread': False},
+                                        connect_args={
+                                            'check_same_thread': False},
                                         poolclass=StaticPool)
             self.createdb()
         elif dbtype == 'postgresql':
             try:
                 # Set echo=True to Enable debug mode
                 self.engine = create_engine('postgresql+psycopg2://{0}:{1}@{2}:{3}/{4}'.
-                                            format(dbuser, dbpasswd, dbhost, dbport, dbname),
+                                            format(dbuser, dbpasswd,
+                                                   dbhost, dbport, dbname),
                                             echo=False, pool_size=20, max_overflow=100)
             except:
-                logger.exception("Could not connect to the postgresql database.")
+                logger.exception(
+                    "Could not connect to the postgresql database.")
                 sys.exit(1)
         elif dbtype == 'mysql':
             try:
                 self.engine = create_engine('mysql+pymysql://{0}:{1}@{2}:{3}/{4}'.
-                                            format(dbuser, dbpasswd, dbhost, dbport, dbname),
+                                            format(dbuser, dbpasswd,
+                                                   dbhost, dbport, dbname),
                                             pool_size=20, max_overflow=40, echo=False)
             except:
                 logger.exception("Could not connect to the mysql database.")
@@ -186,7 +205,8 @@ class DataBaseInterface(object):
         try:
             self.Session = sessionmaker(bind=self.engine)
         except:
-            logger.exception("Could not create database binding, please check database settings")
+            logger.exception(
+                "Could not create database binding, please check database settings")
             sys.exit(1)
 
     @contextmanager
@@ -216,7 +236,8 @@ class DataBaseInterface(object):
     def list_observations(self):
         s = self.Session()
         # todo tests
-        obsnums = [obs.obsnum for obs in s.query(Observation).filter(Observation.status != 'NEW')]
+        obsnums = [obs.obsnum for obs in s.query(
+            Observation).filter(Observation.status != 'NEW')]
         s.close()
         return obsnums
 
@@ -227,7 +248,8 @@ class DataBaseInterface(object):
         obsnums = []
         s = self.Session()
         try:
-            obsnums = [obs.obsnum for obs in s.query(Observation).filter(Observation.status == status)]
+            obsnums = [obs.obsnum for obs in s.query(
+                Observation).filter(Observation.status == status)]
         except:
             logger.debug("No new observations found.")
         s.close()
@@ -237,10 +259,10 @@ class DataBaseInterface(object):
         s = self.Session()
         try:
             obsnums = [obs.obsnum for obs in s.query(Observation).
-                       filter((Observation.current_stage_in_progress != 'FAILED')
-                              | (Observation.current_stage_in_progress.is_(None))).
-                       filter((Observation.current_stage_in_progress != 'KILLED')
-                              | (Observation.current_stage_in_progress.is_(None))).
+                       filter((Observation.current_stage_in_progress != 'FAILED') |
+                              (Observation.current_stage_in_progress.is_(None))).
+                       filter((Observation.current_stage_in_progress != 'KILLED') |
+                              (Observation.current_stage_in_progress.is_(None))).
                        filter(Observation.status != 'NEW').
                        filter(Observation.status != 'COMPLETE').all()]
 
@@ -264,10 +286,10 @@ class DataBaseInterface(object):
         s = self.Session()
         try:
             obsnums = [obs.obsnum for obs in s.query(Observation).
-                       filter((Observation.current_stage_in_progress != 'FAILED')
-                              | (Observation.current_stage_in_progress.is_(None))).
-                       filter((Observation.current_stage_in_progress != 'KILLED')
-                              | (Observation.current_stage_in_progress.is_(None))).
+                       filter((Observation.current_stage_in_progress != 'FAILED') |
+                              (Observation.current_stage_in_progress.is_(None))).
+                       filter((Observation.current_stage_in_progress != 'KILLED') |
+                              (Observation.current_stage_in_progress.is_(None))).
                        filter(Observation.status != 'NEW').
                        filter(Observation.status != 'COMPLETE').
                        filter(Observation.stillhost == tm_hostname).all()]
@@ -287,7 +309,8 @@ class DataBaseInterface(object):
         """
         s = self.Session()
         # print("My obsnum! %s") % obsnum
-        OBS = s.query(Observation).filter(Observation.obsnum == str(obsnum)).one()
+        OBS = s.query(Observation).filter(
+            Observation.obsnum == str(obsnum)).one()
         s.close()
         return OBS
 
@@ -322,7 +345,8 @@ class DataBaseInterface(object):
         s.commit()
         s.close()
 
-    def update_log(self, obsnum, status=None, logtext=None, exit_status=None, append=True):
+    def update_log(self, obsnum, status=None, logtext=None,
+                   exit_status=None, append=True):
         """
         replace the contents of the most recent log
         """
@@ -332,7 +356,8 @@ class DataBaseInterface(object):
             s.close()
             self.add_log(str(obsnum), status, logtext, exit_status)
             return
-        LOG = s.query(Log).filter(Log.obsnum == str(obsnum)).order_by(Log.timestamp.desc()).limit(1).one()
+        LOG = s.query(Log).filter(Log.obsnum == str(obsnum)).order_by(
+            Log.timestamp.desc()).limit(1).one()
         LOG.end_time = current_datetime
         if exit_status is not None:
             LOG.exit_status = exit_status
@@ -356,7 +381,8 @@ class DataBaseInterface(object):
         """
         s = self.Session()
         if good_only:
-            LOGs = s.query(Log).filter(Log.obsnum == obsnum, Log.exit_status == 0)
+            LOGs = s.query(Log).filter(
+                Log.obsnum == obsnum, Log.exit_status == 0)
         LOGs = s.query(Log).filter(Log.obsnum == obsnum)
         logtext = '\n'.join([LOG.logtext for LOG in LOGs])
         s.close()
@@ -372,8 +398,10 @@ class DataBaseInterface(object):
         FAILED_LOG_COUNT_Q = s.query(Log.obsnum,
                                      func.count('*').label('cnt')).filter(Log.exit_status != 0).group_by(
                                          Log.obsnum).subquery()
-        FAILED_LOGS = s.query(FAILED_LOG_COUNT_Q).filter(FAILED_LOG_COUNT_Q.c.cnt >= nfail)
-        FAILED_OBSNUMS = map(int, [FAILED_LOG.obsnum for FAILED_LOG in FAILED_LOGS])
+        FAILED_LOGS = s.query(FAILED_LOG_COUNT_Q).filter(
+            FAILED_LOG_COUNT_Q.c.cnt >= nfail)
+        FAILED_OBSNUMS = map(
+            int, [FAILED_LOG.obsnum for FAILED_LOG in FAILED_LOGS])
         s.close()
         return FAILED_OBSNUMS
 
@@ -420,18 +448,20 @@ class DataBaseInterface(object):
         """
         Add a file to the database and associate it with an observation.
         """
-        if path_prefix is not None and not filename.startswith (path_prefix):
-            raise Exception ('if using path_prefix, filename must start with it; got %s, %s'
-                             % (path_prefix, filename))
+        if path_prefix is not None and not filename.startswith(path_prefix):
+            raise Exception('if using path_prefix, filename must start with it; got %s, %s'
+                            % (path_prefix, filename))
 
-        FILE = File(filename=filename, host=host, path_prefix=(path_prefix or ''))
+        FILE = File(filename=filename, host=host,
+                    path_prefix=(path_prefix or ''))
         # get the observation corresponding to this file
         s = self.Session()
         OBS = s.query(Observation).filter(Observation.obsnum == obsnum).one()
         FILE.observation = OBS  # associate the file with an observation
         s.add(FILE)
         s.commit()
-        filenum = FILE.filenum  # we gotta grab this before we close the session.
+        # we gotta grab this before we close the session.
+        filenum = FILE.filenum
         s.close()  # close the session
         return filenum
 
@@ -456,15 +486,19 @@ class DataBaseInterface(object):
         neighbors = {}
         for obs in obslist:
             obsnum = self.add_observation(obs['obsnum'], obs['date'], obs['date_type'], obs['pol'],
-                                          obs['filename'], obs['host'], outputhost=obs['outputhost'],
-                                          length=obs['length'], status=obs['status'],
+                                          obs['filename'], obs[
+                                              'host'], outputhost=obs['outputhost'],
+                                          length=obs['length'], status=obs[
+                                              'status'],
                                           path_prefix=obs.get('path_prefix'))
 
-            neighbors[obsnum] = (obs.get('neighbor_low', None), obs.get('neighbor_high', None))
+            neighbors[obsnum] = (obs.get('neighbor_low', None),
+                                 obs.get('neighbor_high', None))
 
         s = self.Session()
         for middleobsnum in neighbors:
-            OBS = s.query(Observation).filter(Observation.obsnum == middleobsnum).one()
+            OBS = s.query(Observation).filter(
+                Observation.obsnum == middleobsnum).one()
             if neighbors[middleobsnum][0] is not None:
 
                 L = s.query(Observation).filter(
@@ -485,7 +519,8 @@ class DataBaseInterface(object):
 
     def delete_test_obs(self):
         s = self.Session()
-        obsnums = [obs.obsnum for obs in s.query(Observation).filter(Observation.outputhost == "UNITTEST")]
+        obsnums = [obs.obsnum for obs in s.query(Observation).filter(
+            Observation.outputhost == "UNITTEST")]
         s.close()
         for obsnum in obsnums:
             self.delete_obs(obsnum)
@@ -493,7 +528,8 @@ class DataBaseInterface(object):
     def delete_obs(self, obsnum):
         #
         # Delete an obseration and its associated entry in File table
-        # Jon: Does not seem to want to auto delete assocaited file, need to fix
+        # Jon: Does not seem to want to auto delete assocaited file, need to
+        # fix
 
         s = self.Session()
         obslist = s.query(Log).filter(Log.obsnum == obsnum)
@@ -506,7 +542,8 @@ class DataBaseInterface(object):
             s.commit()
 
         try:
-            OBS = s.query(Observation).filter(Observation.obsnum == obsnum).one()
+            OBS = s.query(Observation).filter(
+                Observation.obsnum == obsnum).one()
             s.delete(OBS)
             s.commit()
         except:
@@ -545,7 +582,8 @@ class DataBaseInterface(object):
         s = self.Session()
         OBS = s.query(Observation).filter(Observation.obsnum == obsnum).one()
         obsnums = []
-        for n in s.query(Observation).filter(Observation.date == OBS.date).distinct():
+        for n in s.query(Observation).filter(
+                Observation.date == OBS.date).distinct():
             if n.obsnum != obsnum:
                 obsnums.append(n.obsnum)
         s.close()
@@ -641,14 +679,14 @@ class DataBaseInterface(object):
         if not apply_path_prefix:
             return myhost, mypath, myfile
 
-        if not mypath.startswith (path_prefix):
-            raise Exception ('internal consistency failure: filename should start with %s but got %s'
-                             % (path_prefix, mypath))
+        if not mypath.startswith(path_prefix):
+            raise Exception('internal consistency failure: filename should start with %s but got %s'
+                            % (path_prefix, mypath))
 
         if path_prefix == '':
             return myhost, '', mypath, myfile
 
-        parent_dirs = mypath[len (path_prefix)+1:]
+        parent_dirs = mypath[len(path_prefix) + 1:]
         return myhost, path_prefix, parent_dirs, myfile
 
     def get_output_location(self, obsnum):
@@ -687,7 +725,8 @@ class DataBaseInterface(object):
 
         """
         with self.session_scope() as s:
-            item = s.query(Log).filter (Log.obsnum == obsnum).order_by(Log.timestamp.desc ()).first ()
+            item = s.query(Log).filter(Log.obsnum == obsnum).order_by(
+                Log.timestamp.desc()).first()
             if item is None:
                 return None
             return {
@@ -704,7 +743,8 @@ class DataBaseInterface(object):
         ###
         since = datetime.datetime.now() - datetime.timedelta(minutes=3)
         s = self.Session()
-        stills = s.query(Still).filter(Still.last_checkin > since, Still.status == "OK").all()
+        stills = s.query(Still).filter(Still.last_checkin >
+                                       since, Still.status == "OK").all()
         s.close()
         return stills
 
@@ -717,7 +757,8 @@ class DataBaseInterface(object):
         s.close()
         return still
 
-    def still_checkin(self, hostname, ip_addr, port, load, data_dir, status="OK", max_tasks=2, cur_tasks=0):
+    def still_checkin(self, hostname, ip_addr, port, load,
+                      data_dir, status="OK", max_tasks=2, cur_tasks=0):
         """Check to see if the still entry already exists in the database, if it does
         update the timestamp, port, data_dir, and load. If does not exist then
         go ahead and create an entry.
@@ -726,31 +767,32 @@ class DataBaseInterface(object):
         # Collect load statistics and classify ourselves as under duress if
         # anything is too excessive.
 
-        current_load = os.getloadavg()[1] #use the 5 min load average
+        current_load = os.getloadavg()[1]  # use the 5 min load average
 
         vmem = psutil.virtual_memory()
         free_memory = vmem.available / (1024 ** 3)
         total_memory = vmem.total / (1024 ** 3)
 
-        fs_info = os.statvfs (data_dir)
+        fs_info = os.statvfs(data_dir)
         free_disk = fs_info.f_frsize * fs_info.f_bavail
 
         duress = (
-            current_load >= 80 or # normalize to n_cpu()?
-            free_memory < 1 or # measured in gigs
-            free_disk < 2147483648 # measured in bytes; = 3 gigs
+            current_load >= 80 or  # normalize to n_cpu()?
+            free_memory < 1 or  # measured in gigs
+            free_disk < 2147483648  # measured in bytes; = 3 gigs
         )
 
         if duress and status == 'OK':
-            logger.warn ('still is under duress: load %s, free mem %s, free disk %s',
-                         current_load, free_memory, free_disk / 1024**3)
+            logger.warn('still is under duress: load %s, free mem %s, free disk %s',
+                        current_load, free_memory, free_disk / 1024**3)
             status = 'DURESS'
 
         # Now actually update the database.
 
         s = self.Session()
 
-        if s.query(Still).filter(Still.hostname == hostname).count() > 0:  # Check if the still already exists, if so just update the time
+        # Check if the still already exists, if so just update the time
+        if s.query(Still).filter(Still.hostname == hostname).count() > 0:
             still = s.query(Still).filter(Still.hostname == hostname).one()
             still.last_checkin = datetime.datetime.now()
             still.status = status
@@ -790,7 +832,8 @@ class DataBaseInterface(object):
         ###
         s = self.Session()
         since = datetime.datetime.now() - datetime.timedelta(minutes=3)
-        still = s.query(Still.hostname).filter(Still.last_checkin > since, Still.status == "OK").order_by(Still.current_load).all()
+        still = s.query(Still.hostname).filter(
+            Still.last_checkin > since, Still.status == "OK").order_by(Still.current_load).all()
         np.random.shuffle(still)
         s.close()
 
@@ -798,13 +841,15 @@ class DataBaseInterface(object):
 
     def get_obs_assigned_to_still(self, still_hostname):
         s = self.Session()
-        observations = s.query(Observation).filter(Observation.stillhost == still_hostname)
+        observations = s.query(Observation).filter(
+            Observation.stillhost == still_hostname)
         s.close()
         return observations
 
     def update_obs_current_stage(self, obsnum, current_stage_in_progress):
         s = self.Session()
-        obs = s.query(Observation).filter(Observation.obsnum == str(obsnum)).one()
+        obs = s.query(Observation).filter(
+            Observation.obsnum == str(obsnum)).one()
 
         obs.current_stage_in_progress = current_stage_in_progress
         obs.current_stage_start_time = datetime.datetime.now()

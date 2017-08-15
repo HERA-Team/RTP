@@ -35,7 +35,9 @@ class WorkFlow:
         self.neighbors = 0
         self.pol_neighbors = 0
         self.still_locked_after = ''
-        self.drmma_args = []   # I think this will be useful but will want to be cautious of -o and -e being passed overriding our settings.
+        # I think this will be useful but will want to be cautious of -o and -e
+        # being passed overriding our settings.
+        self.drmma_args = []
         self.default_drmma_queue = ''
         self.drmma_queue_by_task = []
 
@@ -46,6 +48,7 @@ class SpawnerClass:
     #
     # Just create a class so I have a place to store some long lasting variables
     #
+
     def __init__(self):
         self.data = []
         self.dbi = ''
@@ -80,10 +83,13 @@ class SpawnerClass:
         return
 
     def preflight_check_ts(self, wf):
-        if self.check_path("Data_Dir", self.data_dir) != 0:  # Check data_dir path exists and is writeable
+        # Check data_dir path exists and is writeable
+        if self.check_path("Data_Dir", self.data_dir) != 0:
             sys.exit(1)
 
-        workflow_list = list(wf.workflow_actions)[1:]  # Remove the first task as its a dummy task to set an obs status to for processing to start
+        # Remove the first task as its a dummy task to set an obs status to for
+        # processing to start
+        workflow_list = list(wf.workflow_actions)[1:]
         for task in workflow_list:
             if self.check_script_path(task) != 0:
                 sys.exit(1)
@@ -94,9 +100,11 @@ class SpawnerClass:
             if os.access(dir_path, os.W_OK):
                 return 0
             else:
-                print("ERROR: %s path : %s is not writeable by this program") % (dir_type, dir_path)
+                print("ERROR: %s path : %s is not writeable by this program") % (
+                    dir_type, dir_path)
         else:
-            print("ERROR: %s path : %s does not seem to exist.") % (dir_type, dir_path)
+            print("ERROR: %s path : %s does not seem to exist.") % (
+                dir_type, dir_path)
         return 1
 
     def check_script_path(self, task):
@@ -111,7 +119,8 @@ class SpawnerClass:
             if os.access(full_path, os.X_OK):
                 return 0
             else:
-                logger.critical("Script : %s is not set as executable, please run chmod +x %s" % (full_path, full_path))
+                logger.critical(
+                    "Script : %s is not set as executable, please run chmod +x %s" % (full_path, full_path))
         else:
             logger.critical("Count not find workflow script : %s" % full_path)
 
@@ -137,11 +146,14 @@ class StillDataBaseInterface(dbi.DataBaseInterface):
     #
     # Overload DataBaseInterface class from still to be able to modify some functions
     #
-    def add_observation2(self, obsnum, date, date_type, pol, filename, host, length=2 / 60. / 24, status=''):
+
+    def add_observation2(self, obsnum, date, date_type, pol,
+                         filename, host, length=2 / 60. / 24, status=''):
         #
         # Overloading the existing class function to get MWA data in, though this might be generic enough to backport
         #
-        OBS = dbi.Observation(obsnum=obsnum, date=date, date_type=date_type, pol=0, status=status, length=length)
+        OBS = dbi.Observation(
+            obsnum=obsnum, date=date, date_type=date_type, pol=0, status=status, length=length)
         print(OBS.obsnum)
         s = self.Session()
         try:
@@ -161,14 +173,16 @@ class StillDataBaseInterface(dbi.DataBaseInterface):
         return obsnum
 
 
-def get_config_entry(config, heading, item, reqd=False, remove_spaces=True, default_val=''):
+def get_config_entry(config, heading, item, reqd=False,
+                     remove_spaces=True, default_val=''):
     if config.has_option(heading, item):
         if remove_spaces:
             config_item = config.get(heading, item).replace(" ", "")
         else:
             config_item = config.get(heading, item)
     elif reqd:
-        print("The required config file setting \'%s\' under [%s] is missing") % (item, heading)
+        print("The required config file setting \'%s\' under [%s] is missing") % (
+            item, heading)
         sys.exit(1)
     else:
         config_item = default_val
@@ -188,34 +202,52 @@ def process_client_config_file(sg, wf):
         config_sections = config.sections()
 
         # Read in all the database information
-        sg.dbhost = get_config_entry(config, 'dbinfo', 'dbhost', reqd=True, remove_spaces=True)
-        sg.dbport = get_config_entry(config, 'dbinfo', 'dbport', reqd=True, remove_spaces=True)
-        sg.dbtype = get_config_entry(config, 'dbinfo', 'dbtype', reqd=True, remove_spaces=True)
-        sg.dbuser = get_config_entry(config, 'dbinfo', 'dbuser', reqd=True, remove_spaces=True)
-        sg.dbpasswd = get_config_entry(config, 'dbinfo', 'dbpasswd', reqd=True, remove_spaces=True)
-        sg.dbname = get_config_entry(config, 'dbinfo', 'dbname', reqd=True, remove_spaces=True)
+        sg.dbhost = get_config_entry(
+            config, 'dbinfo', 'dbhost', reqd=True, remove_spaces=True)
+        sg.dbport = get_config_entry(
+            config, 'dbinfo', 'dbport', reqd=True, remove_spaces=True)
+        sg.dbtype = get_config_entry(
+            config, 'dbinfo', 'dbtype', reqd=True, remove_spaces=True)
+        sg.dbuser = get_config_entry(
+            config, 'dbinfo', 'dbuser', reqd=True, remove_spaces=True)
+        sg.dbpasswd = get_config_entry(
+            config, 'dbinfo', 'dbpasswd', reqd=True, remove_spaces=True)
+        sg.dbname = get_config_entry(
+            config, 'dbinfo', 'dbname', reqd=True, remove_spaces=True)
 
         # Read in all the STILL information
-        sg.hosts = get_config_entry(config, 'Still', 'hosts', reqd=True, remove_spaces=True).split(",")
-        sg.port = int(get_config_entry(config, 'Still', 'port', reqd=False, remove_spaces=True))
-        sg.ip_addr = get_config_entry(config, 'Still', 'ip_addr', reqd=False, remove_spaces=True)
-        sg.data_dir = get_config_entry(config, 'Still', 'data_dir', reqd=False, remove_spaces=False)
+        sg.hosts = get_config_entry(
+            config, 'Still', 'hosts', reqd=True, remove_spaces=True).split(",")
+        sg.port = int(get_config_entry(config, 'Still',
+                                       'port', reqd=False, remove_spaces=True))
+        sg.ip_addr = get_config_entry(
+            config, 'Still', 'ip_addr', reqd=False, remove_spaces=True)
+        sg.data_dir = get_config_entry(
+            config, 'Still', 'data_dir', reqd=False, remove_spaces=False)
         sg.path_to_do_scripts = get_config_entry(config, 'Still', 'path_to_do_scripts', reqd=False,
                                                  remove_spaces=False, default_val=basedir + 'scripts/')
-        sg.timeout = int(get_config_entry(config, 'Still', 'timeout', reqd=False, remove_spaces=True))
-        sg.block_size = int(get_config_entry(config, 'Still', 'block_size', reqd=False, remove_spaces=True))
+        sg.timeout = int(get_config_entry(
+            config, 'Still', 'timeout', reqd=False, remove_spaces=True))
+        sg.block_size = int(get_config_entry(
+            config, 'Still', 'block_size', reqd=False, remove_spaces=True))
         sg.actions_per_still = int(get_config_entry(config, 'Still', 'actions_per_still', reqd=False,
                                                     remove_spaces=True, default_val=8))
-        sg.sleep_time = int(get_config_entry(config, 'Still', 'sleep_time', reqd=False, remove_spaces=True))
-        sg.cluster_scheduler = int(get_config_entry(config, 'Still', 'cluster_scheduler', reqd=False, remove_spaces=True))
-        sg.drmaa_shared = get_config_entry(config, 'Still', 'drmaa_shared', reqd=False, remove_spaces=True)
-        sg.log_path = get_config_entry(config, 'Still', 'log_path', reqd=False, remove_spaces=False, default_val=basedir + 'log/')
+        sg.sleep_time = int(get_config_entry(
+            config, 'Still', 'sleep_time', reqd=False, remove_spaces=True))
+        sg.cluster_scheduler = int(get_config_entry(
+            config, 'Still', 'cluster_scheduler', reqd=False, remove_spaces=True))
+        sg.drmaa_shared = get_config_entry(
+            config, 'Still', 'drmaa_shared', reqd=False, remove_spaces=True)
+        sg.log_path = get_config_entry(
+            config, 'Still', 'log_path', reqd=False, remove_spaces=False, default_val=basedir + 'log/')
 
         if "ScriptEnvironmentVars" in config_sections:  # Read in allow the env vars for the do_ scripts
-            sg.env_vars = dict(config.items('ScriptEnvironmentVars'))  # Put the vars into a dict that we will later pickle
+            # Put the vars into a dict that we will later pickle
+            sg.env_vars = dict(config.items('ScriptEnvironmentVars'))
 
         # Read in all the workflow information
-        wf.workflow_actions = tuple(get_config_entry(config, 'WorkFlow', 'actions', reqd=True, remove_spaces=True).split(","))
+        wf.workflow_actions = tuple(get_config_entry(
+            config, 'WorkFlow', 'actions', reqd=True, remove_spaces=True).split(","))
         wf.workflow_actions_endfile = tuple(get_config_entry(config, 'WorkFlow', 'actions_endfile',
                                                              reqd=False, remove_spaces=True).split(","))
         wf.prioritize_obs = int(get_config_entry(config, 'WorkFlow', 'prioritize_obs', reqd=False,
@@ -223,25 +255,31 @@ def process_client_config_file(sg, wf):
         # Do I still use this?
         wf.still_locked_after = get_config_entry(config, 'WorkFlow', 'still_locked_after', reqd=False,
                                                  remove_spaces=True)
-        wf.default_drmaa_queue = get_config_entry(config, 'WorkFlow', 'default_drmaa_queue', reqd=False, remove_spaces=True)
-        wf.neighbors = int(get_config_entry(config, 'WorkFlow', 'neighbors', reqd=False, remove_spaces=False, default_val=0))
+        wf.default_drmaa_queue = get_config_entry(
+            config, 'WorkFlow', 'default_drmaa_queue', reqd=False, remove_spaces=True)
+        wf.neighbors = int(get_config_entry(
+            config, 'WorkFlow', 'neighbors', reqd=False, remove_spaces=False, default_val=0))
         wf.pol_neighbors = int(get_config_entry(config, 'WorkFlow', 'pol_neighbors', reqd=False, remove_spaces=False,
                                                 default_val=0))
         wf.lock_all_neighbors_to_same_still = int(get_config_entry(config, 'WorkFlow', 'lock_all_neighbors_to_same_still',
                                                                    reqd=False, remove_spaces=False, default_val=0))
-        wf.log_to_mc = int(get_config_entry(config, 'WorkFlow', 'log_to_mc', reqd=False, remove_spaces=False, default_val=0))
+        wf.log_to_mc = int(get_config_entry(
+            config, 'WorkFlow', 'log_to_mc', reqd=False, remove_spaces=False, default_val=0))
 
         # Collect all the prereqs and arg strings for any action of the workflow
         #    and throw them into a dict of keys and lists
         for action in wf.workflow_actions or wf.workflow_actions_endfile:
-            # Put in a default host:path/filename for each actions arguements that get passed to do_ scripts
+            # Put in a default host:path/filename for each actions arguements
+            # that get passed to do_ scripts
             wf.action_args[action] = '[\'%s:%s/%s\' % (pot, path, basename)]'
 
             if action in config_sections:
                 wf.action_prereqs[action] = get_config_entry(config, action, 'prereqs', reqd=False,
                                                              remove_spaces=True).split(",")
-                wf.action_args[action] = get_config_entry(config, action, 'args', reqd=False, remove_spaces=False)
-                wf.drmaa_args[action] = get_config_entry(config, action, 'drmaa_args', reqd=False, remove_spaces=False)
+                wf.action_args[action] = get_config_entry(
+                    config, action, 'args', reqd=False, remove_spaces=False)
+                wf.drmaa_args[action] = get_config_entry(
+                    config, action, 'drmaa_args', reqd=False, remove_spaces=False)
                 wf.drmaa_queue_by_task[action] = get_config_entry(config, action, 'drmaa_queue', reqd=False,
                                                                   remove_spaces=False)
     else:
@@ -265,7 +303,8 @@ def get_dbi_from_config(config_file, Spawner=None, still_startup=0):
     else:
         sg = Spawner
     # Create database interface with SQL Alchemy
-    sg.dbi = StillDataBaseInterface(sg.dbhost, sg.dbport, sg.dbtype, sg.dbname, sg.dbuser, sg.dbpasswd, test=False)
+    sg.dbi = StillDataBaseInterface(
+        sg.dbhost, sg.dbport, sg.dbtype, sg.dbname, sg.dbuser, sg.dbpasswd, test=False)
     return sg.dbi
 
 
@@ -279,7 +318,8 @@ def start_client(sg, wf, args):
         print("Database has been initialized")
         sys.exit(0)
     try:
-        if sg.dbi.test_db() is False:  # Testing the database to make sure we made a connection, its fun..
+        # Testing the database to make sure we made a connection, its fun..
+        if sg.dbi.test_db() is False:
             print("Incorrect number of tables read from the database")
             sys.exit(1)
     except:
@@ -290,7 +330,8 @@ def start_client(sg, wf, args):
     sg.logger = setup_logger("Scheduler", "DEBUG", sg.log_path)
     task_clients = [TaskClient(sg.dbi, s, wf, sg.port, sg) for s in sg.hosts]
 
-    # Screw it going to just break a bunch of the unittest stuff and simplify the calling of the scheduler to take SpawnerClass
+    # Screw it going to just break a bunch of the unittest stuff and simplify
+    # the calling of the scheduler to take SpawnerClass
     myscheduler = StillScheduler(task_clients, wf, sg)  # Init scheduler daemon
     myscheduler.start(dbi=sg.dbi, ActionClass=Action)
 
@@ -326,7 +367,8 @@ def main():
     # Probably accept config file location and maybe config file section as command line arguments
     # for the moment this is mostly just placeholder stuffs
 
-    parser = argparse.ArgumentParser(description='AstroTaskr Workflow Management Software')
+    parser = argparse.ArgumentParser(
+        description='AstroTaskr Workflow Management Software')
     parser.add_argument('--init', dest='init', action='store_true',
                         help='Initialize the database if this is the first time running this')
     parser.add_argument('--server', dest='server', action='store_true',

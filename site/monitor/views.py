@@ -24,6 +24,7 @@ import json
 from flask import render_template, flash, redirect, url_for, request, g, make_response, Response, jsonify
 from sqlalchemy import func
 
+
 def db_objs():
     '''
     outputs database objects
@@ -43,6 +44,7 @@ def db_objs():
 
     return dbi, obs_table, file_table, log_table
 
+
 @app.route('/', methods=['GET', 'POST'])
 @app.route('/index', methods=['GET', 'POST'])
 def index():
@@ -56,12 +58,13 @@ def index():
     '''
     #dbi, obs_table, file_table, log_table = db_objs()
 
-    #with dbi.session_scope() as s:
+    # with dbi.session_scope() as s:
     #    pass
 
     return render_template('index.html')
 
-@app.route('/stream_plot', methods = ['GET', 'POST'])
+
+@app.route('/stream_plot', methods=['GET', 'POST'])
 def stream_plot():
     '''
     generate streaming data
@@ -76,7 +79,8 @@ def stream_plot():
 
     return jsonify({'count': file_count})
 
-@app.route('/obs_hist', methods = ['POST'])
+
+@app.route('/obs_hist', methods=['POST'])
 def obs_hist():
     '''
     generate histogram for data
@@ -91,18 +95,21 @@ def obs_hist():
         obs_query = s.query(obs_table, func.count(obs_table))\
                      .filter(obs_table.status == 'COMPLETE')\
                      .group_by(func.substr(obs_table.date, 1, 7))
-        obs_query = ((int(float(q.date)), count) for q, count in obs_query.all())
+        obs_query = ((int(float(q.date)), count)
+                     for q, count in obs_query.all())
         obs_days, obs_counts = zip(*obs_query)
         all_query = s.query(obs_table, func.count(obs_table))\
-                      .group_by(func.substr(obs_table.date, 1, 7))
-        all_query = ((int(float(q.date)), count) for q, count in all_query.all())
+            .group_by(func.substr(obs_table.date, 1, 7))
+        all_query = ((int(float(q.date)), count)
+                     for q, count in all_query.all())
         all_days, all_counts = zip(*all_query)
 
     return render_template('obs_hist.html',
-                            obs_days=obs_days, obs_counts=obs_counts,
-                            all_days=all_days, all_counts=all_counts)
+                           obs_days=obs_days, obs_counts=obs_counts,
+                           all_days=all_days, all_counts=all_counts)
 
-@app.route('/prog_hist', methods = ['POST'])
+
+@app.route('/prog_hist', methods=['POST'])
 def prog_hist():
     '''
     generate histogram for data
@@ -113,7 +120,7 @@ def prog_hist():
     '''
     dbi, obs_table, file_table, log_table = db_objs()
 
-    statuses = ('NEW','UV_POT', 'UV_NFS', 'UV', 'UVC', 'CLEAN_UV', 'UVCR', 'CLEAN_UVC',
+    statuses = ('NEW', 'UV_POT', 'UV_NFS', 'UV', 'UVC', 'CLEAN_UV', 'UVCR', 'CLEAN_UVC',
                 'ACQUIRE_NEIGHBORS', 'UVCRE', 'NPZ', 'UVCRR', 'NPZ_POT',
                 'CLEAN_UVCRE', 'UVCRRE', 'CLEAN_UVCRR', 'CLEAN_NPZ',
                 'CLEAN_NEIGHBORS', 'UVCRRE_POT', 'CLEAN_UVCRRE', 'CLEAN_UVCR',
@@ -124,15 +131,18 @@ def prog_hist():
                       .join(obs_table)\
                       .filter(obs_table.status != 'COMPLETE')\
                       .group_by(obs_table.status)
-        file_query = ((q.observation.status, count) for q, count in file_query.all())
+        file_query = ((q.observation.status, count)
+                      for q, count in file_query.all())
         file_status, file_counts = zip(*file_query)
 
-        file_status, file_counts = zip(*sorted(zip(file_status, file_counts), key=lambda x: statuses.index(x[0])))
+        file_status, file_counts = zip(
+            *sorted(zip(file_status, file_counts), key=lambda x: statuses.index(x[0])))
 
     return render_template('prog_hist.html',
-                            file_status=file_status, file_counts=file_counts)
+                           file_status=file_status, file_counts=file_counts)
 
-@app.route('/obs_table', methods = ['POST'])
+
+@app.route('/obs_table', methods=['POST'])
 def obs_table():
     '''
     generate observation table for killed and failed observations
@@ -155,9 +165,11 @@ def obs_table():
         failed_obs = [fo.to_dict() for fo in failed_obs]
         killed_obs = [ko.to_dict() for ko in killed_obs]
 
-    return render_template('obs_table.html', failed_obs=failed_obs, killed_obs=killed_obs)
+    return render_template(
+        'obs_table.html', failed_obs=failed_obs, killed_obs=killed_obs)
 
-@app.route('/file_table', methods = ['GET', 'POST'])
+
+@app.route('/file_table', methods=['GET', 'POST'])
 def file_table():
     '''
     generate file table for histogram bar
@@ -186,7 +198,8 @@ def file_table():
 
     return render_template('file_table.html', working_FILEs=working_FILEs)
 
-@app.route('/summarize_still', methods = ['GET', 'POST'])
+
+@app.route('/summarize_still', methods=['GET', 'POST'])
 def summarize_still():
     '''
     generate summarize still page
@@ -213,7 +226,7 @@ def summarize_still():
                         .count()
 
         # TABLE #1: small table at top with:
-        #total amount of observations, amount in progress, and amount complete
+        # total amount of observations, amount in progress, and amount complete
 
         all_complete = []
         all_total = []
@@ -221,7 +234,6 @@ def summarize_still():
         pending = 0
 
         completeness = []
-
 
         for night in nights:
             night_complete = s.query(obs_table)\
@@ -234,7 +246,8 @@ def summarize_still():
             OBSs = s.query(obs_table)\
                     .filter(obs_table.date.like(str(night) + '%'))
             obsnums = [OBS.obsnum for OBS in OBSs.all()]
-            complete_obsnums = [OBS.obsnum for OBS in OBSs.all() if OBS.status != 'COMPLETE']
+            complete_obsnums = [
+                OBS.obsnum for OBS in OBSs.all() if OBS.status != 'COMPLETE']
 
             pending = s.query(obs_table)\
                        .filter(obs_table.date.like(str(night) + '%'))\
@@ -244,41 +257,44 @@ def summarize_still():
             #pending = s.query(log_table)\
             #           .filter(log_table.obsnum.in_(complete_obsnums))\
             #           .count()
-                       #.filter(log_table.obsnum.in_(obsnums))\
-                       #.filter(log_table.stage != 'COMPLETE')\
-                       #.filter(obs_table.status != 'COMPLETE')\
+            #.filter(log_table.obsnum.in_(obsnums))\
+            #.filter(log_table.stage != 'COMPLETE')\
+            #.filter(obs_table.status != 'COMPLETE')\
 
             all_complete.append(night_complete)
             all_total.append(night_total)
             all_pending.append(pending)
 
             # TABLE #3:
-            #night_table: nights, complete, total, pending: histogram for each JD vs amount
+            # night_table: nights, complete, total, pending: histogram for each
+            # JD vs amount
 
             if s.query(log_table)\
-                .filter(log_table.obsnum.in_(obsnums))\
-                .count() < 1:
+                    .filter(log_table.obsnum.in_(obsnums))\
+                    .count() < 1:
                 completeness.append((night, 0, night_total, 'Pending'))
                 #print(night, ':', 'completeness', 0, '/', night_total, '[Pending]')
 
             # TABLE #2a:
-            #night completeness table
+            # night completeness table
 
             try:
                 LOG = s.query(log_table)\
                        .filter(log_table.obsnum.in_(obsnums))\
                        .order_by(log_table.timestamp.desc())\
                        .first()
-                       #.one()
-                       #I think this was an error, gets most recent log rather than
-                       #making sure there is only one
+                #.one()
+                # I think this was an error, gets most recent log rather than
+                # making sure there is only one
 
-                if LOG.timestamp > (datetime.datetime.utcnow() - datetime.timedelta(5.0)):
-                    completeness.append((night, night_complete, night_total, LOG.timestamp))
+                if LOG.timestamp > (
+                        datetime.datetime.utcnow() - datetime.timedelta(5.0)):
+                    completeness.append(
+                        (night, night_complete, night_total, LOG.timestamp))
                     #print(night, ':', 'completeness', night_complete, '/', night_total, LOG.timestamp)
 
                 # TABLE #2b:
-                #night completeness table with log timestamp for last entry
+                # night completeness table with log timestamp for last entry
 
                 FAIL_LOGs = s.query(log_table)\
                              .filter(log_table.exit_status > 0)\
@@ -288,7 +304,6 @@ def summarize_still():
             except:
                 #print('No entries in LOG table')
                 fail_obsnums = []
-
 
         # find all obses that have failed in the last 12 hours
         #print('observations pending: %s') % pending
@@ -309,7 +324,8 @@ def summarize_still():
                          .filter(obs_table.obsnum.in_(fail_obsnums))\
                          .order_by(obs_table.stillhost)\
                          .all()
-            fail_stills = list(set([OBS.stillhost for OBS in FAIL_OBSs]))  # list of stills with fails
+            # list of stills with fails
+            fail_stills = list(set([OBS.stillhost for OBS in FAIL_OBSs]))
 
             for fail_still in fail_stills:
                 # get failed obsnums broken down by still
@@ -325,15 +341,14 @@ def summarize_still():
             # TABLE #4:
             # histogram with Still# and Failing Count
 
-
             #print('most recent fails')
             for FAIL_OBS in FAIL_OBSs:
-            #    print(FAIL_OBS.obsnum, FAIL_OBS.status, FAIL_OBS.stillhost)
-                f_obs.append((FAIL_OBS.obsnum, FAIL_OBS.status, FAIL_OBS.stillhost))
+                #    print(FAIL_OBS.obsnum, FAIL_OBS.status, FAIL_OBS.stillhost)
+                f_obs.append(
+                    (FAIL_OBS.obsnum, FAIL_OBS.status, FAIL_OBS.stillhost))
 
         # TABLE #5:
-        #fail table with obsnum, status, and stillhost for each failed obs
-
+        # fail table with obsnum, status, and stillhost for each failed obs
 
         #print('Number of observations completed in the last 24 hours')
 
@@ -344,14 +359,14 @@ def summarize_still():
                          .count()  # HARDWF
         #print('Good count: %s') % good_obscount
 
-
         # TABLE #6:
-        #Label at bottom with Good Observations #, i.e. number of obs completed within the last 24 hours
+        # Label at bottom with Good Observations #, i.e. number of obs
+        # completed within the last 24 hours
 
     return render_template('summarize_still.html',
-                            num_obs=num_obs, num_progress=num_progress, num_complete=num_complete,
-                            nights=nights,
-                            all_complete=all_complete, all_total=all_total, all_pending=all_pending,
-                            completeness=completeness,
-                            f_stills=f_stills, f_counts=f_counts,
-                            f_obs=f_obs, good_obscount=good_obscount)
+                           num_obs=num_obs, num_progress=num_progress, num_complete=num_complete,
+                           nights=nights,
+                           all_complete=all_complete, all_total=all_total, all_pending=all_pending,
+                           completeness=completeness,
+                           f_stills=f_stills, f_counts=f_counts,
+                           f_obs=f_obs, good_obscount=good_obscount)
