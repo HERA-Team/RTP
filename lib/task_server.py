@@ -657,10 +657,11 @@ class TaskServer(HTTPServer):
                 boot_time = psutil.boot_time()
                 dt_boot = now - boot_time
                 dt_boot_hr = dt_boot.total_seconds() / 60 / 60
+                dt_boot_days = dt_boot_hr / 24
 
                 # call functions for interacting with M&C
-                mc_utils.add_mc_server_status(hostname, ip_addr, ncpu, cpu_usage, vmem_pct,
-                                              vmem_tot, du_pct, du_tot)
+                mc_utils.add_mc_server_status(hostname, ip_addr, ncpu, cpu_usage, dt_boot_days,
+                                              vmem_pct, vmem_tot, du_pct, du_tot)
                 mc_utils.add_mc_rtp_status(status, dt_check_min, ntasks, dt_boot_hr)
 
         return 0
@@ -706,6 +707,9 @@ class TaskServer(HTTPServer):
             hostname = socket.gethostname()
             ip_addr = socket.gethostbyname(hostname)
             cpu_usage = psutil.cpu_percent()
+            s = self.dbi_session()
+            still = s.query(Still).filter(Still.hostname == hostname).one()
+            last_checkin = still.last_checking
             self.dbi.still_checkin(hostname, ip_addr, self.port, int(cpu_usage), self.data_dir,
                                    status="OFFLINE")
             self.keep_running = False
@@ -723,5 +727,24 @@ class TaskServer(HTTPServer):
             HTTPServer.shutdown(self)
             if self.sg.cluster_scheduler == 1:
                 self.drmaa_session.exit()  # Terminate DRMAA sessionmaker
+            if self.wf.log_to_mc:
+                # optionally log to M&C that the server is coming offline
+                import mc_utils
+
+                # define values
+                status = "OFFLINE"
+                ntasks = 0
+
+                # get time since last check-in in minutes
+                now = datetime.datetime.now()
+                dt_check = now - last_checkin
+                dt_check_min = dt_check.total_seconds() / 60                
+
+                # get time since boot in hr
+                boot_time = psutil.boot_time()
+                dt_boot = now - boot_time
+                dt_boot_hr = dt_boot.total_seconds() / 60 / 60
+                dt_boot_days = dt_boot_hr / 24
+                mc_utils.add_mc_rtp_status(status, dt_check_min, ntasks, dt_boot_hr)
 
             sys.exit(0)

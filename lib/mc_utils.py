@@ -1,17 +1,35 @@
 from __future__ import print_function, division, absolute_import
 import math
 import cPickle as pickle
-import astropy.time as atime
-import hera_mc.mc_session as mc_session
+from astropy.time import Time
+from hera_mc import mc
 
-import version as rtp.version
+import version as rtpversion
 import hera_qm.version
 import hera_cal.version
 import pyuvdata.version
 
 
-def add_mc_server_status(hostname, ip_addr, ncpu, cpu_usage, vmem_pct,
-                         vmem_tot, du_pct, du_tot):
+def _get_new_mc_session():
+    """
+    Helper function for getting a new connection to the M&C database.
+
+    Args:
+    ====================
+    None
+
+    Return:
+    ====================
+    None
+    """
+    mc_db = mc.connect_to_mc_db()
+    mc_conn = mc_db.engine.connect()
+    mcs = mc.MCSession(bind=mc_conn)
+    return mcs
+
+
+def add_mc_server_status(hostname, ip_addr, ncpu, cpu_usage, uptime, vmem_pct,
+                         vmem_tot, du_pct, du_tot, mcs=None):
     """
     Add an RTP server status to the HERA M&C database.
 
@@ -20,6 +38,7 @@ def add_mc_server_status(hostname, ip_addr, ncpu, cpu_usage, vmem_pct,
     load and memory usage.
 
     Args:
+    ====================
     hostname: string
        Hostname of the computation node
     ip_addr: string
@@ -29,6 +48,8 @@ def add_mc_server_status(hostname, ip_addr, ncpu, cpu_usage, vmem_pct,
     cpu_usage: float
        Current CPU load of the computation node (specifically,
        the 5 minute load average)
+    uptime: float
+       Uptime of computation node (in days)
     vmem_pct: float
        Percentage of memory in use of the computation node
     vmem_tot: float
@@ -37,25 +58,30 @@ def add_mc_server_status(hostname, ip_addr, ncpu, cpu_usage, vmem_pct,
        Percentage of disk in use of the computation node
     du_tot: float
        Total size (in GiB) of memory on the computation node
+    mcs: MCSession, optional
+       MCSession event to connect to. If not provided, start a new one.
 
     Return:
+    ====================
     None
     """
     # get the current time
-    t = atime.Time.now()
+    t = Time.now()
 
     # add to hera_mc
-    mcs = mc_session.MCSession()
-    mcs.add_server_status('rtp', hostname, ip_addr, t, ncpu, cpu_usage, vmem_pct,
+    if mcs is None:
+        mcs = _get_new_mc_session()
+    mcs.add_server_status('rtp', hostname, ip_addr, t, ncpu, cpu_usage, uptime, vmem_pct,
                           vmem_tot, du_pct, du_tot)
     return
 
 
-def add_mc_rtp_status(status, dt_check_min, ntasks, dt_boot_hr):
+def add_mc_rtp_status(status, dt_check_min, ntasks, dt_boot_hr, mcs=None):
     """
     Add a server status to the RTP subsystem table in HERA M&C database.
 
     Args:
+    ====================
     status: string
        Status of the server ("OK", "DURESS", "OFFLINE", etc.)
     dt_check_min: float
@@ -64,19 +90,25 @@ def add_mc_rtp_status(status, dt_check_min, ntasks, dt_boot_hr):
        Number of tasks assigned to system
     dt_boot_hr: float
        Time since last reboot, in hours
+    mcs: MCSession, optional
+       MCSession event to connect to. If not provided, start a new one. This
+       is for making testing easier, and might go away later.
 
     Return:
+    ====================
     None
     """
     # get the current time
-    t = atime.Time.now()
+    t = Time.now()
 
     # add to hera_mc
-    mc_session.add_rtp_status(t, status, dt_check_min, ntasks, dt_check_hr)
+    if mcs is None:
+        mcs = _get_new_mc_session()
+    mcs.add_rtp_status(t, status, dt_check_min, ntasks, dt_boot_hr)
     return
 
 
-def add_process_event(obsid, status):
+def add_process_event(obsid, status, mcs=None):
     """
     Add the status of an RTP process (i.e., obsid workflow) to HERA M&C database.
 
@@ -89,31 +121,39 @@ def add_process_event(obsid, status):
     to be read in later.
 
     Args:
+    ====================
     obsid: string
        Obsid of the process
     status: string
        Status to add to db. Should be one of: queued, started, finished, error
+    mcs: MCSession, optional
+       MCSession event to connect to. If not provided, start a new one. This
+       is for making testing easier, and might go away later.
 
     Return:
+    ====================
     None
     """
     # get time
-    t = atime.Time.now()
+    t = Time.now()
 
     try:
-        mc_session.add_rtp_process_event(t, obsid, status)
+        if mcs is None:
+            mcs = _get_new_mc_session()
+        mcs.add_rtp_process_event(t, obsid, status)
     except:
         # save to disk
         gps_sec = math.floor(t.gps)
         info_dict = {"time": t, "obsid": obsid, "event": status}
-        filename = "pe_{0}_{1}.pkl".format(self.obs, str(int(gps_sec)))
+        filename = "pe_{0}_{1}.pkl".format(obsid, str(int(gps_sec)))
         with open(filename, 'w') as f:
             pickle.dump(info_dict, f)
 
     return
 
 
-def add_process_record(obsid, workflow_actions, workflow_actions_endfile=None):
+def add_process_record(obsid, workflow_actions, workflow_actions_endfile=None,
+                       mcs=None):
     """
     Add the final record of steps for an RTP process to the HERA M&C database.
 
@@ -129,18 +169,23 @@ def add_process_record(obsid, workflow_actions, workflow_actions_endfile=None):
     saved to disk to be backfilled later.
 
     Args:
+    ====================
     obsid: string
        Obsid of the process
     workflow_actions: list of strings
        List of tasks in the workflow
     workflow_actions_endfile: list of strings, optional
        List of tasks after the main portion of the workflow is completed
+    mcs: MCSession, optional
+       MCSession event to connect to. If not provided, start a new one. This
+       is for making testing easier, and might go away later.
 
     Return:
+    ====================
     None
     """
     # get time
-    t = atime.Time.now()
+    t = Time.now()
 
     # make CSV list of pipeline steps
     if (workflow_actions_endfile is not None
@@ -151,7 +196,7 @@ def add_process_record(obsid, workflow_actions, workflow_actions_endfile=None):
         pipeline = ','.join(workflow_actions)
 
     # get git info for different packages
-    rtp_info = rtp.version.construct_version_info()
+    rtp_info = rtpversion.construct_version_info()
     hera_qm_info = hera_qm.version.construct_version_info()
     hera_cal_info = hera_cal.version.construct_version_info()
     pyuvdata_info = pyuvdata.version.construct_version_info()
@@ -166,18 +211,20 @@ def add_process_record(obsid, workflow_actions, workflow_actions_endfile=None):
     pyuvdata_hash = pyuvdata_info['git_hash']
 
     try:
-        mc_session.add_rtp_process_record(t, obsid, pipeline, rtp_version, rtp_hash,
-                                          hera_qm_version, hera_qm_hash,
-                                          hera_cal_version, hera_cal_hash,
-                                          pyuvdata_version, pyuvdata_hash)
+        if mcs is None:
+            mcs = _get_new_mc_session()
+        mcs.add_rtp_process_record(t, obsid, pipeline, rtp_version, rtp_hash,
+                                   hera_qm_version, hera_qm_hash,
+                                   hera_cal_version, hera_cal_hash,
+                                   pyuvdata_version, pyuvdata_hash)
     except:
         # save to disk to read later
         gps_sec = math.floor(t.gps)
-        info_dict = {"time": t, "obsid": self.obs, "pipeline_list": pipeline, "rtp_git_version": rtp_version,
+        info_dict = {"time": t, "obsid": obsid, "pipeline_list": pipeline, "rtp_git_version": rtp_version,
                      "rtp_git_hash": rtp_hash, "hera_qm_git_version": hera_qm_version, "hera_qm_git_hash": hera_qm_hash,
                      "hera_cal_git_version": hera_cal_version, "hera_cal_git_hash": hera_cal_hash,
                      "pyuvdata_git_version": pyuvdata_version, "pyuvdata_git_hash": pyuvdata_hash}
-        filename = "pr_{0}_{1}.pkl".format(self.obs, str(int(gps_sec)))
+        filename = "pr_{0}_{1}.pkl".format(obsid, str(int(gps_sec)))
         with open(filename, 'w') as f:
             pickle.dump(info_dict, f)
 
