@@ -212,7 +212,7 @@ class Task:
         # log to M&C
         if self.ts.wf.log_to_mc:
             import mc_utils
-            mc_utils.add_process_event(self.obs, "started")
+            mc_utils.add_mc_process_event(self.obs, "started")
 
     def record_failure(self, failure_type="FAILED"):
         for task in self.ts.active_tasks:
@@ -228,7 +228,7 @@ class Task:
         if self.ts.wf.log_to_mc:
             # log to M&C
             import mc_utils
-            mc_utils.add_process_event(self.obs, "error")
+            mc_utils.add_mc_process_event(self.obs, "error")
 
         return
 
@@ -240,8 +240,8 @@ class Task:
         if self.ts.wf.log_to_mc:
             # log to M&C
             import mc_utils
-            mc_utils.add_process_event(self.obs, "finished")
-            mc_utils.add_process_record(self.obs, self.ts.wf.workflow_actions,
+            mc_utils.add_mc_process_event(self.obs, "finished")
+            mc_utils.add_mc_process_record(self.obs, self.ts.wf.workflow_actions,
                                         self.ts.wf.workflow_actions_endfile)
 
 
@@ -615,20 +615,6 @@ class TaskServer(HTTPServer):
         while self.keep_running is True:
             # get last check-in time before updating
             hostname = socket.gethostname()
-            s = self.dbi.Session()
-            # check that it exists in the db
-            if s.query(Still).filter(Still.hostname == hostname).count() > 0:
-                still = s.query(Still).filter(Still.hostname == hostname).one()
-                last_checkin = still.last_checkin
-                # calculate minutes since then
-                # use datetime for self-consistency...
-                now = datetime.datetime.now()
-                dt_check = now - last_checkin
-                dt_check_min = dt_check.total_seconds() / 60
-            else:
-                dt_check_min = 0.
-
-            # continue with checkin
             ip_addr = socket.gethostbyname(hostname)
             cpu_usage = os.getloadavg()[1]  # using the 5 min load avg
             ntasks = len(self.active_tasks)
@@ -654,10 +640,10 @@ class TaskServer(HTTPServer):
                 du_pct = du.percent
 
                 # get time since boot in hr
+                now = time.time()
                 boot_time = psutil.boot_time()
                 dt_boot = now - boot_time
-                dt_boot_hr = dt_boot.total_seconds() / 60 / 60
-                dt_boot_days = dt_boot_hr / 24
+                dt_boot_days = dt_boot / 60 / 60 / 24
 
                 # call functions for interacting with M&C
                 mc_utils.add_mc_server_status(hostname, ip_addr, ncpu, cpu_usage, dt_boot_days,
@@ -709,7 +695,7 @@ class TaskServer(HTTPServer):
             cpu_usage = psutil.cpu_percent()
             s = self.dbi_session()
             still = s.query(Still).filter(Still.hostname == hostname).one()
-            last_checkin = still.last_checking
+            last_checkin = still.last_checkin
             self.dbi.still_checkin(hostname, ip_addr, self.port, int(cpu_usage), self.data_dir,
                                    status="OFFLINE")
             self.keep_running = False
@@ -727,24 +713,5 @@ class TaskServer(HTTPServer):
             HTTPServer.shutdown(self)
             if self.sg.cluster_scheduler == 1:
                 self.drmaa_session.exit()  # Terminate DRMAA sessionmaker
-            if self.wf.log_to_mc:
-                # optionally log to M&C that the server is coming offline
-                import mc_utils
-
-                # define values
-                status = "OFFLINE"
-                ntasks = 0
-
-                # get time since last check-in in minutes
-                now = datetime.datetime.now()
-                dt_check = now - last_checkin
-                dt_check_min = dt_check.total_seconds() / 60                
-
-                # get time since boot in hr
-                boot_time = psutil.boot_time()
-                dt_boot = now - boot_time
-                dt_boot_hr = dt_boot.total_seconds() / 60 / 60
-                dt_boot_days = dt_boot_hr / 24
-                mc_utils.add_mc_rtp_status(status, dt_check_min, ntasks, dt_boot_hr)
 
             sys.exit(0)

@@ -108,7 +108,7 @@ def add_mc_rtp_status(status, dt_check_min, ntasks, dt_boot_hr, mcs=None):
     return
 
 
-def add_process_event(obsid, status, mcs=None):
+def add_mc_process_event(obsid, status, mcs=None):
     """
     Add the status of an RTP process (i.e., obsid workflow) to HERA M&C database.
 
@@ -152,8 +152,8 @@ def add_process_event(obsid, status, mcs=None):
     return
 
 
-def add_process_record(obsid, workflow_actions, workflow_actions_endfile=None,
-                       mcs=None):
+def add_mc_process_record(obsid, workflow_actions, workflow_actions_endfile=None,
+                          mcs=None):
     """
     Add the final record of steps for an RTP process to the HERA M&C database.
 

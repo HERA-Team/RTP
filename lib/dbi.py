@@ -420,7 +420,7 @@ class DataBaseInterface(object):
         except ImportError:
             return obsnum
         else:
-            mc_utils.add_process_event(obsnum, 'queued')
+            mc_utils.add_mc_process_event(obsnum, 'queued')
             return obsnum
 
     def add_file(self, obsnum, host, filename, path_prefix=None):

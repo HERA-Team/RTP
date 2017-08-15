@@ -117,14 +117,14 @@ class TestMCUtils(TestHERAMC):
         nt.assert_equal(result.num_processes, self.rtp_status[2])
         nt.assert_equal(result.restart_hours_elapsed, self.rtp_status[3])
 
-    def test_add_process_event(self):
+    def test_add_mc_process_event(self):
         # add observation to db
         self.test_session.add_obs(*self.observation_values)
         obs_result = self.test_session.get_obs()
         nt.assert_equal(len(obs_result), 1)
 
         # add process event to db
-        mc_utils.add_process_event(*self.process_event, mcs=self.test_session)
+        mc_utils.add_mc_process_event(*self.process_event, mcs=self.test_session)
 
         # retrieve record and check that it matches
         result = self.test_session.get_rtp_process_event(self.time - TimeDelta(2, format='sec'))
@@ -137,7 +137,7 @@ class TestMCUtils(TestHERAMC):
 
         # also test dumping a dict to disk
         # feeding in nonsense for an MCSession will trigger the "except" branch
-        mc_utils.add_process_event(*self.process_event, mcs='blah')
+        mc_utils.add_mc_process_event(*self.process_event, mcs='blah')
 
         # read in pickle from disk
         # there should only be one
@@ -156,14 +156,14 @@ class TestMCUtils(TestHERAMC):
         # clean up after ourselves
         os.remove(pe_fn)
 
-    def test_add_process_record(self):
+    def test_add_mc_process_record(self):
         # add observation to db
         self.test_session.add_obs(*self.observation_values)
         obs_result = self.test_session.get_obs()
         nt.assert_equal(len(obs_result), 1)
 
         # add process record to db
-        mc_utils.add_process_record(self.obsid, self.workflow_actions, mcs=self.test_session)
+        mc_utils.add_mc_process_record(self.obsid, self.workflow_actions, mcs=self.test_session)
 
         # retrieve record and check that it matches
         result = self.test_session.get_rtp_process_record(self.time - TimeDelta(2, format='sec'))
@@ -201,8 +201,8 @@ class TestMCUtils(TestHERAMC):
         # test adding workflow_actions and workflow_actions_endfile
         # sleep to prevent a conflict with existing entry
         time.sleep(2)
-        mc_utils.add_process_record(self.obsid, self.workflow_actions,
-                                    self.workflow_actions_endfile, mcs=self.test_session)
+        mc_utils.add_mc_process_record(self.obsid, self.workflow_actions,
+                                       self.workflow_actions_endfile, mcs=self.test_session)
 
         # retrieve the record and check that it matches
         result = self.test_session.get_rtp_process_record(self.time - TimeDelta(2, format='sec'),
@@ -225,8 +225,8 @@ class TestMCUtils(TestHERAMC):
 
         # test dumping to a pickle and reading it back in
         # feeding in nonsense for an MCSession will trigger the "except" branch
-        mc_utils.add_process_record(self.obsid, self.workflow_actions,
-                                    self.workflow_actions_endfile, mcs='blah')
+        mc_utils.add_mc_process_record(self.obsid, self.workflow_actions,
+                                       self.workflow_actions_endfile, mcs='blah')
 
         # read in pickle from disk
         # there should only be one

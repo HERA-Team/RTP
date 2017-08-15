@@ -19,7 +19,7 @@ from SocketServer import ThreadingMixIn
 from still_shared import InputThread
 from still_shared import handle_keyboard_input
 from task_server import TaskClient
-# from still_shared import setup_logger
+
 
 #  Setup the lib path ./lib/  as a spot to check for python libraries
 # basedir = os.path.dirname(os.path.realpath(__file__))[:-3]
@@ -29,6 +29,7 @@ logger = True  # This is just here because the jedi syntax checker is dumb.
 
 MAXFAIL = 5  # Jon : move this into config
 TIME_INT_FOR_NEW_TM_CHECK = 90
+TIME_INT_FOR_NEW_MC_CHECK = 300
 
 
 def file2jd(zenuv):
@@ -331,6 +332,7 @@ class Scheduler(ThreadingMixIn, HTTPServer):
         logger.info('Starting Scheduler')
         self.dbi = dbi
         last_checked_for_stills = time.time()
+        last_checked_for_mc = time.time()
 
         while self.keep_running:
 
@@ -339,6 +341,32 @@ class Scheduler(ThreadingMixIn, HTTPServer):
                 last_checked_for_stills = time.time()
                 logger.debug("Number of TaskManagers : %s" %
                              len(self.task_clients))
+
+            if self.wf.log_to_mc:
+                import mc_utils
+                now = time.time()
+                dt_check = now - last_checked_for_mc
+                if dt_check.total_seconds() > TIME_INT_FOR_NEW_MC_CHECK:
+                    # get total number of running tasks
+                    ntasks = 0
+                    launched_actions_copy = copy.deepcopy(self.launched_actions)
+                    for tm in launched_actions_copy:
+                        ntasks += len(self.get_launched_actions(tm, tx=False))
+
+                    # get time since check-in in minutes
+                    dt_check_min = dt_check / 60
+
+                    # get time since boot in hours
+                    boot_time = psutil.boot_time()
+                    dt_boot = now - boot_time
+                    dt_boot_hr = dt_boot / 60 / 60
+
+                    # log to M&C
+                    status = "OK"
+                    logger.debug("Logging to M&C : {0} status, {1:5.2f} min since last check; {2}"
+                                 " tasks running; {4:10.3} hr since boot".format(status, dt_check_min,
+                                                                                 str(ntasks), dt_boot_hr))
+                    mc_utils.add_mc_rtp_status(status, dt_check_min, ntasks, dt_boot_hr)
 
             self.ext_command_hook()
             self.get_new_active_obs()
