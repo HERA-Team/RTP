@@ -1,15 +1,23 @@
 #! /bin/bash
 set -e
 
-conn_name=$1
-librarian_path=$3
-f=$(basename $2 uvc)
+# import common functions
+source _common.sh
 
-# Only the hexes get firstcal'd:
+conn=${1}
+store_path=${2}
+basename=${3}
 
-for ext in HH ; do
-    local_file="$f$ext.uvc.fc.npz"
-    librarian_file="$f$ext.uvc.firstcal.npz"
-    echo upload_to_librarian.py $conn_name $local_file $librarian_path/$librarian_file
-    upload_to_librarian.py $conn_name $local_file $librarian_path/$librarian_file
-done
+# define polarization
+pol1="xx"
+
+fn=$(basename ${basename} uv)
+
+# only run this for one polarization type
+if is_same_pol $fn $pol1; then
+    nopol_base=$(remove_pol $fn)
+    omni_f=`echo ${nopol_base}HH.uv.omni.calfits`
+    total_path=`echo ${store_path}/${omni_f}`
+    echo upload_to_librarian.py ${conn} ${omni_f} ${total_path}
+    upload_to_librarian.py ${conn} ${omni_f} ${total_path}
+fi

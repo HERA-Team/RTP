@@ -12,8 +12,8 @@ fn=$(basename ${basename} uv)
 
 # we only have firstcal files for linear polarizations (e.g., 'xx')
 if is_lin_pol $fn; then
-    firstcal_f=`echo ${fn}HH.uv.first.calfits`
-    total_path=`echo ${store_path}/${firstcal_f}`
-    echo upload_to_librarian.py ${conn} ${firstcal_f} ${total_path}
-    upload_to_librarian.py ${conn} ${firstcal_f} ${total_path}
+    fmetrics_f=`echo ${fn}HH.uv.first_metrics.json`
+    total_path=`echo ${store_path}/${fmetrics_f}`
+    echo upload_to_librarian.py ${conn} ${fmetrics_f} ${total_path}
+    upload_to_librarian.py ${conn} ${fmetrics_f} ${total_path}
 done
