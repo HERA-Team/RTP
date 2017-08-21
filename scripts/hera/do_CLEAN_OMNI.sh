@@ -7,9 +7,11 @@ source _common.sh
 # define base polarization
 pol1="xx"
 
+basename=$(basename ${1} uv)
+
 if is_same_pol $1 $pol1; then
     # get base filename
-    base_fn=$(remove_pol $1)
-    echo rm -rf ${base_fn}.omni.calfits
-    rm -rf ${base_fn}.omni.calfits
+    nopol_base=$(remove_pol ${basename})
+    echo rm -rf ${nopol_base}HH.uv.omni.calfits
+    rm -rf ${nopol_base}HH.uv.omni.calfits
 done

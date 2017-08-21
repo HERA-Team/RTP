@@ -5,6 +5,7 @@ set -e
 source _common.sh
 
 if is_lin_pol $1; then
-    echo rm -rf ${1}.first.calfits
-    rm -rf ${1}.first.calfits
+    basename=$(basename $1 uv)
+    echo rm -rf ${basename}HH.uv.first.calfits
+    rm -rf ${basename}HH.uv.first.calfits
 fi
