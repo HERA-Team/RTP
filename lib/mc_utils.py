@@ -23,8 +23,7 @@ def _get_new_mc_session():
     None
     """
     mc_db = mc.connect_to_mc_db()
-    mc_conn = mc_db.engine.connect()
-    mcs = mc.MCSession(bind=mc_conn)
+    mcs = mc_db.sessionmaker()
     return mcs
 
 
