@@ -49,6 +49,7 @@ function is_same_pol ()
         return 1
     fi
 }
+
 function replace_pol ()
 # feed in a file name and a polarization, and replace the
 # polarization with the provided one
