@@ -5,7 +5,7 @@ set -e
 source _common.sh
 
 # make the file name
-bn=$(basename $1 uvc)
+bn=$(basename $1 uv)
 
-echo xrfi_run.py --infile_format=miriad --outfile_format=miriad --extension=R --algorithm=xrfi_simple --kt_size=8 --kf_size=8 --sig_init=6 --sig_adj=2 ${bn}HH.uvcO
-xrfi_run.py --infile_format=miriad --outfile_format=miriad --extension=R --algorithm=xrfi_simple --kt_size=8 --kf_size=8 --sig_init=6 --sig_adj=2 ${bn}HH.uvcO
+echo xrfi_run.py --infile_format=miriad --outfile_format=miriad --extension=R --algorithm=xrfi_simple --kt_size=8 --kf_size=8 --sig_init=6 --sig_adj=2 ${bn}HH.uvO
+xrfi_run.py --infile_format=miriad --outfile_format=miriad --extension=R --algorithm=xrfi_simple --kt_size=8 --kf_size=8 --sig_init=6 --sig_adj=2 ${bn}HH.uvO

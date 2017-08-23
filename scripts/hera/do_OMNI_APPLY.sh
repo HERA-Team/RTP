@@ -5,14 +5,14 @@ set -e
 source _common.sh
 
 # get base filename
-fn=$(basename $1 uvc)
+fn=$(basename $1 uv)
 
 # get polarization
 pol=$(get_pol $fn)
 
 # get the name of the omnical file
 nopol_base=$(remove_pol $fn)
-omni_f=`echo ${nopol_base}HH.uvc.omni.calfits`
+omni_f=`echo ${nopol_base}HH.uv.omni.calfits`
 
-echo omni_apply.py -p $pol --omnipath=$omni_f --extension=O ${fn}HH.uvc
-omni_apply.py -p $pol --omnipath=$omni_f --extension=O ${fn}HH.uvc
+echo omni_apply.py -p $pol --omnipath=$omni_f --extension=O ${fn}HH.uv
+omni_apply.py -p $pol --omnipath=$omni_f --extension=O ${fn}HH.uv

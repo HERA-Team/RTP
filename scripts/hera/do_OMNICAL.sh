@@ -5,7 +5,7 @@ set -e
 source _common.sh
 
 CALBASE=hsa7458_v001
-fn=$(basename $1 uvc)
+fn=$(basename $1 uv)
 
 # define polarizations
 pol1="xx"
@@ -17,7 +17,7 @@ pol4="yx"
 if is_same_pol $fn $pol1; then
     # get metrics file name
     nopol_base=$(remove_pol $fn)
-    metrics_f=`echo ${nopol_base}HH.uvc.ant_metrics.json`
+    metrics_f=`echo ${nopol_base}HH.uv.ant_metrics.json`
 
     # define polarization file names
     fn1=$(replace_pol $fn $pol1)
@@ -43,7 +43,7 @@ if is_same_pol $fn $pol1; then
     idx=0
     for pol in "${FCAL_ARR[@]}"; do
 	base=$(replace_pol $fn $pol)
-	FCAL_ARR[$idx]=`echo ${base}HH.uvc.first.calfits`
+	FCAL_ARR[$idx]=`echo ${base}HH.uv.first.calfits`
 	idx=$((idx+1))
     done
 
@@ -53,6 +53,6 @@ if is_same_pol $fn $pol1; then
     # make comma-separated list of polarizations
     pols=$(join_by , $pol1 $pol2 $pol3 $pol4)
 
-    echo omni_run.py -C ${CALBASE} --metrics_json=$metrics_f --firstcal=$fcal -p $pols ${fn1}HH..uvc ${fn2}HH.uvc ${fn3}HH.uvc ${fn4}HH.uvc
-    omni_run.py -C ${CALBASE} --metrics_json=$metrics_f --firstcal=$fcal -p $pols ${fn1}HH.uvc ${fn2}HH.uvc ${fn3}HH.uvc ${fn4}HH.uvc
+    echo omni_run.py -C ${CALBASE} --metrics_json=$metrics_f --firstcal=$fcal -p $pols ${fn1}HH..uv ${fn2}HH.uv ${fn3}HH.uv ${fn4}HH.uv
+    omni_run.py -C ${CALBASE} --metrics_json=$metrics_f --firstcal=$fcal -p $pols ${fn1}HH.uv ${fn2}HH.uv ${fn3}HH.uv ${fn4}HH.uv
 fi

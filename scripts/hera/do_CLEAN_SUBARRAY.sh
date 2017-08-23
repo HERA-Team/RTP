@@ -1,8 +1,8 @@
 #! /bin/bash
 set -e
-f=$(basename $1 uvc)
+f=$(basename $1 uv)
 echo ${f}
 for ext in HH ; do
-    echo rm -rf ${f}$ext.uvc
-    rm -rf ${f}$ext.uvc
+    echo rm -rf ${f}$ext.uv
+    rm -rf ${f}$ext.uv
 done
