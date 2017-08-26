@@ -6,7 +6,7 @@ function get_pol ()
 # assumes the typical file format, and keys in on pattern "zen.xxxxxxx.xxxxx.pp.*",
 # returns "pp"
 {
-    local pol=$(echo $1 | sed -E 's/zen\.[0-9]{7}\.[0-9]{5}\.(..)\.*$/\1/')
+    local pol=$(echo $1 | sed -E 's/zen\.[0-9]{7}\.[0-9]{5}\.(..)\..*$/\1/')
     echo "$pol"
 }
 

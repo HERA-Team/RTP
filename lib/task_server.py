@@ -152,8 +152,8 @@ class Task:
             with open(self.stdout_stderr_file, 'r') as output_file:
                 task_output = output_file.read()
         except:
-            logger.debug("Task.finalize: Could not open stdout / stderr file for obs: % s and task: '
-            ' % s marking task as FAILED" % (self.obs, self.task))
+            logger.debug("Task.finalize: Could not open stdout / stderr file for obs: % s and task: "
+                         " % s marking task as FAILED" % (self.obs, self.task))
             self.record_failure()
             return
 
