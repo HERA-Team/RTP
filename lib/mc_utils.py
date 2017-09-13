@@ -1,6 +1,7 @@
 from __future__ import print_function, division, absolute_import
 import math
 import cPickle as pickle
+import os
 from astropy.time import Time
 from hera_mc import mc
 
@@ -9,6 +10,8 @@ import hera_qm.version
 import hera_cal.version
 import pyuvdata.version
 
+# place to save M&C logs when system is down
+__mc_path = '/home/obs/rtp_mc_logs'
 
 def _get_new_mc_session():
     """
@@ -22,7 +25,8 @@ def _get_new_mc_session():
     ====================
     None
     """
-    mc_db = mc.connect_to_mc_db()
+    # use default settings for connecting to the db
+    mc_db = mc.connect_to_mc_db(None)
     mcs = mc_db.sessionmaker()
     return mcs
 
@@ -107,7 +111,7 @@ def add_mc_rtp_status(status, dt_check_min, ntasks, dt_boot_hr, mcs=None):
     return
 
 
-def add_mc_process_event(obsid, status, mcs=None):
+def add_mc_process_event(obsid, status, mcs=None, outdir=None):
     """
     Add the status of an RTP process (i.e., obsid workflow) to HERA M&C database.
 
@@ -128,6 +132,8 @@ def add_mc_process_event(obsid, status, mcs=None):
     mcs: MCSession, optional
        MCSession event to connect to. If not provided, start a new one. This
        is for making testing easier, and might go away later.
+    outdir: string, optional
+       Directory to save file to, if M&C is not present. Defaults to __mc_path.
 
     Return:
     ====================
@@ -145,14 +151,19 @@ def add_mc_process_event(obsid, status, mcs=None):
         gps_sec = math.floor(t.gps)
         info_dict = {"time": t, "obsid": obsid, "event": status}
         filename = "pe_{0}_{1}.pkl".format(obsid, str(int(gps_sec)))
-        with open(filename, 'w') as f:
+        if outdir is None:
+            od = __mc_path
+        else:
+            od = outdir
+        whole_path = os.path.join(od, filename)
+        with open(whole_path, 'w') as f:
             pickle.dump(info_dict, f)
 
     return
 
 
 def add_mc_process_record(obsid, workflow_actions, workflow_actions_endfile=None,
-                          mcs=None):
+                          mcs=None, outdir=None):
     """
     Add the final record of steps for an RTP process to the HERA M&C database.
 
@@ -178,6 +189,8 @@ def add_mc_process_record(obsid, workflow_actions, workflow_actions_endfile=None
     mcs: MCSession, optional
        MCSession event to connect to. If not provided, start a new one. This
        is for making testing easier, and might go away later.
+    outdir: string, optional
+       Directory to save file to, if M&C is not present. Defaults to __mc_path.
 
     Return:
     ====================
@@ -220,11 +233,17 @@ def add_mc_process_record(obsid, workflow_actions, workflow_actions_endfile=None
         # save to disk to read later
         gps_sec = math.floor(t.gps)
         info_dict = {"time": t, "obsid": obsid, "pipeline_list": pipeline, "rtp_git_version": rtp_version,
-                     "rtp_git_hash": rtp_hash, "hera_qm_git_version": hera_qm_version, "hera_qm_git_hash": hera_qm_hash,
+                     "rtp_git_hash": rtp_hash, "hera_qm_git_version": hera_qm_version,
+                     "hera_qm_git_hash": hera_qm_hash,
                      "hera_cal_git_version": hera_cal_version, "hera_cal_git_hash": hera_cal_hash,
                      "pyuvdata_git_version": pyuvdata_version, "pyuvdata_git_hash": pyuvdata_hash}
         filename = "pr_{0}_{1}.pkl".format(obsid, str(int(gps_sec)))
-        with open(filename, 'w') as f:
+        if outdir is None:
+            od = __mc_path
+        else:
+            od = outdir
+        whole_path = os.path.join(od, filename)
+        with open(whole_path, 'w') as f:
             pickle.dump(info_dict, f)
 
     return

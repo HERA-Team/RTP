@@ -14,4 +14,4 @@ if is_same_pol $1 $pol1; then
     nopol_base=$(remove_pol ${basename})
     echo rm -rf ${nopol_base}HH.uv.omni.calfits
     rm -rf ${nopol_base}HH.uv.omni.calfits
-done
+fi

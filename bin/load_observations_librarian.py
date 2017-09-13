@@ -129,11 +129,32 @@ def main(args):
         except NoResultFound:
             return True
 
+    def file_from_jd(oi, jd):
+        date = oi['date']
+        if int(np.floor(date)) == jd:
+            return True
+        else:
+            return False
+
+    def file_later_than_jd(oi, jd):
+        date = oi['date']
+        if int(np.floor(date)) >= jd:
+            return True
+        else:
+            return False
+
     n_before = len(obsinfos)
     obsinfos = [oi for oi in obsinfos if not_already_seen(oi)]
     if len(obsinfos) != n_before:
         print ('Dropping %d already-ingested records.' %
                (n_before - len(obsinfos)))
+
+    n_now = len(obsinfos)
+    h1c_epoch = 2458002
+    obsinfos = [oi for oi in obsinfos if file_later_than_jd(oi, h1c_epoch)]
+    if len(obsinfos) != n_now:
+        print ('Dropping %d records not from JD %d.' %
+               (n_now - len(obsinfos), jd_of_interest))
 
     if not len(obsinfos):
         print ('Nothing to add.')

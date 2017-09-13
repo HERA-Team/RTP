@@ -693,9 +693,6 @@ class TaskServer(HTTPServer):
             hostname = socket.gethostname()
             ip_addr = socket.gethostbyname(hostname)
             cpu_usage = psutil.cpu_percent()
-            s = self.dbi_session()
-            still = s.query(Still).filter(Still.hostname == hostname).one()
-            last_checkin = still.last_checkin
             self.dbi.still_checkin(hostname, ip_addr, self.port, int(cpu_usage), self.data_dir,
                                    status="OFFLINE")
             self.keep_running = False

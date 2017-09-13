@@ -104,7 +104,8 @@ class Action:
 
         for status_of_neighbor in self.neighbor_status:
             if status_of_neighbor in (None, '', 'NEW'):
-                return False  # obs not entered in DB or not ready for processing
+                # obs not entered in DB or not ready for processing
+                return False
 
             index_of_neighbor_status = self.wf.workflow_actions.index(
                 status_of_neighbor)
@@ -605,8 +606,11 @@ class Scheduler(ThreadingMixIn, HTTPServer):
             pol_neighbors = self.dbi.get_pol_neighbors(obsnum)
 
             if len(pol_neighbors) != 3:
-                raise AssertionError("Was expecting 3 pol_neighbors, got {} instead".format(
-                    str(len(pol_neighbors))))
+                logger.debug(
+                    "File {} was expecting 3 pol_neighbors, got {} instead. Skipping...".format(
+                        obsnum, str(len(pol_neighbors))))
+                self.dbi.set_obs_status(obsnum, "COMPLETE")
+                return None
 
             # decide when it's time to transition to actions_endfile
             try:
@@ -646,8 +650,9 @@ class Scheduler(ThreadingMixIn, HTTPServer):
                 elif self.wf.pol_neighbors == 1:
                     for neighbor in self.get_all_pol_neighbors(obsnum):
                         self.dbi.set_obs_still_host(neighbor, still)
-
-        if still != 0:  # If the obsnum is assigned to a server that doesn't exist at the moment we need to skip it, maybe reassign later
+        # If the obsnum is assigned to a server that doesn't exist at the moment
+        #   we need to skip it, maybe reassign later
+        if still != 0:
             if ActionClass is None:
                 ActionClass = Action
 
@@ -661,7 +666,7 @@ class Scheduler(ThreadingMixIn, HTTPServer):
                     return a
             else:
                 return a
-        # logging.debug('scheduler.get_action: (%s,%s) does not have prereqs' % (a.task, a.obs))
+        # logger.debug('scheduler.get_action: (%s,%s) does not have prereqs' % (a.task, a.obs))
         return None
 
     def determine_priority(self, action):

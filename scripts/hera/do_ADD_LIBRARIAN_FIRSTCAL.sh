@@ -16,4 +16,4 @@ if is_lin_pol $fn; then
     total_path=`echo ${store_path}/${firstcal_f}`
     echo upload_to_librarian.py ${conn} ${firstcal_f} ${total_path}
     upload_to_librarian.py ${conn} ${firstcal_f} ${total_path}
-done
+fi

@@ -4,7 +4,6 @@ set -e
 # load common funcitons
 source _common.sh
 
-CALBASE=hsa7458_v001
 fn=$(basename $1 uv)
 
 # define polarizations
@@ -53,6 +52,6 @@ if is_same_pol $fn $pol1; then
     # make comma-separated list of polarizations
     pols=$(join_by , $pol1 $pol2 $pol3 $pol4)
 
-    echo omni_run.py -C ${CALBASE} --metrics_json=$metrics_f --firstcal=$fcal -p $pols ${fn1}HH..uv ${fn2}HH.uv ${fn3}HH.uv ${fn4}HH.uv
-    omni_run.py -C ${CALBASE} --metrics_json=$metrics_f --firstcal=$fcal -p $pols ${fn1}HH.uv ${fn2}HH.uv ${fn3}HH.uv ${fn4}HH.uv
+    echo omni_run.py --metrics_json=$metrics_f --firstcal=$fcal -p $pols ${fn1}HH..uv ${fn2}HH.uv ${fn3}HH.uv ${fn4}HH.uv
+    omni_run.py --metrics_json=$metrics_f --firstcal=$fcal -p $pols ${fn1}HH.uv ${fn2}HH.uv ${fn3}HH.uv ${fn4}HH.uv
 fi

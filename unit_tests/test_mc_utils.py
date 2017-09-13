@@ -19,7 +19,6 @@ import hera_qm.version
 import hera_cal.version
 import pyuvdata.version
 
-
 class TestMCUtils(TestHERAMC):
     def setUp(self):
         super(TestMCUtils, self).setUp()
@@ -137,7 +136,8 @@ class TestMCUtils(TestHERAMC):
 
         # also test dumping a dict to disk
         # feeding in nonsense for an MCSession will trigger the "except" branch
-        mc_utils.add_mc_process_event(*self.process_event, mcs='blah')
+        mc_utils.add_mc_process_event(*self.process_event, mcs='blah',
+                                      outdir=os.getcwd())
 
         # read in pickle from disk
         # there should only be one
@@ -226,7 +226,8 @@ class TestMCUtils(TestHERAMC):
         # test dumping to a pickle and reading it back in
         # feeding in nonsense for an MCSession will trigger the "except" branch
         mc_utils.add_mc_process_record(self.obsid, self.workflow_actions,
-                                       self.workflow_actions_endfile, mcs='blah')
+                                       self.workflow_actions_endfile, mcs='blah',
+                                       outdir=os.getcwd())
 
         # read in pickle from disk
         # there should only be one

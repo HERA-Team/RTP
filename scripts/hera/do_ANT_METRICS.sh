@@ -5,7 +5,6 @@ set -e
 source _common.sh
 
 # run script from hera_qm
-CALBASE=hsa7458_v001
 fn=$(basename $1 uv)
 
 # define polarizations
@@ -25,6 +24,6 @@ if is_same_pol $fn $pol1; then
     fn3=$(replace_pol $fn $pol3)
     fn4=$(replace_pol $fn $pol4)
 
-    echo ant_metrics_run.py -C ${CALBASE} -p $pols --crossCut=5 --deadCut=5 --extension=.ant_metrics.json --vis_format=miriad ${fn1}HH.uv ${fn2}HH.uv ${fn3}HH.uv ${fn4}HH.uv
-    ant_metrics_run.py -C ${CALBASE} -p $pols --crossCut=5 --deadCut=5 --extension=.ant_metrics.json --vis_format=miriad ${fn1}HH.uv ${fn2}HH.uv ${fn3}HH.uv ${fn4}HH.uv
+    echo ant_metrics_run.py -p $pols --crossCut=5 --deadCut=5 --extension=.ant_metrics.json --vis_format=miriad ${fn1}HH.uv ${fn2}HH.uv ${fn3}HH.uv ${fn4}HH.uv
+    ant_metrics_run.py -p $pols --crossCut=5 --deadCut=5 --extension=.ant_metrics.json --vis_format=miriad ${fn1}HH.uv ${fn2}HH.uv ${fn3}HH.uv ${fn4}HH.uv
 fi

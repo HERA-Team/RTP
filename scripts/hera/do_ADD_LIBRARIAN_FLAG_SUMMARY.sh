@@ -10,7 +10,7 @@ basename=${3}
 
 fn=$(basename ${basename} uv)
 
-summary_f=`echo ${fn}HH.uv.flag_summary.npz`
+summary_f=`echo ${fn}HH.uvO.flag_summary.npz`
 total_path=`echo ${store_path}/${summary_f}`
 echo upload_to_librarian.py ${conn} ${summary_f} ${total_path}
 upload_to_librarian.py ${conn} ${summary_f} ${total_path}
