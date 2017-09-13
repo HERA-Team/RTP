@@ -15,3 +15,9 @@ filename=`echo ${bn}HH.uvOR`
 total_path=`echo ${store_path}/${filename}`
 echo upload_to_librarian.py ${conn} ${filename} ${total_path}
 upload_to_librarian.py ${conn} ${filename} ${total_path}
+
+# also add flag summary
+filename=`echo ${bn}HH.uvO.flag_summary.npz`
+total_path=`echo ${store_path}/${filename}`
+echo upload_to_librarian.py ${conn} ${filename} ${total_path}
+upload_to_librarian.py ${conn} ${filename} ${total_path}

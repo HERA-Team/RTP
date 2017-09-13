@@ -20,4 +20,15 @@ if is_same_pol $fn $pol1; then
     total_path=`echo ${store_path}/${omni_f}`
     echo upload_to_librarian.py ${conn} ${omni_f} ${total_path}
     upload_to_librarian.py ${conn} ${omni_f} ${total_path}
+
+    # add model visibilities and xtalk too
+    model_vis=`echo ${nopol_base}HH.uv.vis.uvfits`
+    total_path=`echo ${store_path}/${model_vis}`
+    echo upload_to_librarian.py ${conn} ${model_vis} ${total_path}
+    upload_to_librarian.py ${conn} ${model_vis} ${total_path}
+
+    xtalk=`echo ${nopol_base}HH.uv.xtalk.uvfits`
+    total_path=`echo ${store_path}/${xtalk}`
+    echo upload_to_librarian.py ${conn} ${xtalk} ${total_path}
+    upload_to_librarian.py ${conn} ${xtalk} ${total_path}
 fi
