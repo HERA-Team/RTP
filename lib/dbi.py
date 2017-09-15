@@ -405,7 +405,7 @@ class DataBaseInterface(object):
         returns: obsnum  (see jdpol2obsnum)
         Note: does not link up neighbors!
         """
-        OBS = Observation(obsnum=obsnum, date=date, date_type=date_type, pol=pol,
+        OBS = Observation(obsnum=obsnum, date=str(date), date_type=date_type, pol=pol,
                           status=status, outputhost=outputhost, length=length)
         s = self.Session()
         s.add(OBS)

@@ -125,6 +125,9 @@ def main(args):
     def not_already_seen(oi):
         try:
             obs = dbi.get_obs(oi['obsnum'])
+            # communicate that this file is already known to RTP
+            lc.create_file_event(os.path.basename(
+                oi['filename']), rtp_ingested_key)
             return False
         except NoResultFound:
             return True
