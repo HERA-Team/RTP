@@ -13,6 +13,7 @@ import sys
 import psutil
 import pickle
 import subprocess
+import netifaces
 
 from string import upper
 
@@ -26,6 +27,8 @@ logger = True  # This is just here because the jedi syntax checker is dumb.
 
 PLATFORM = platform.system()
 FAIL_ON_ERROR = 1
+
+TIME_INT_FOR_NEW_MC_CHECK = 300
 
 
 class Task:
@@ -613,42 +616,53 @@ class TaskServer(HTTPServer):
         # Just a timer that will update that its last_checkin time in the database every 5min
         #
         while self.keep_running is True:
-            # get last check-in time before updating
-            hostname = socket.gethostname()
-            ip_addr = socket.gethostbyname(hostname)
+            hostname = platform.node()
+            ip_addr = self.get_ip_address()
             cpu_usage = os.getloadavg()[1]  # using the 5 min load avg
             ntasks = len(self.active_tasks)
             self.dbi.still_checkin(hostname, ip_addr, self.port, int(cpu_usage), self.data_dir,
                                    status="OK", max_tasks=self.sg.actions_per_still, cur_tasks=ntasks)
+
             time.sleep(10)
+        return 0
 
-            if self.wf.log_to_mc:
-                import mc_utils
+    def mc_checkin_thread(self):
+        import mc_utils
 
-                # get general info
-                ncpu = psutil.cpu_count()
-                status = still.status
+        while self.keep_running is True:
+            hostname = platform.node()
+            ip_addr = self.get_ip_address()
+            cpu_usage = os.getloadavg()[1]  # using the 5 min load avg
+            ntasks = len(self.active_tasks)
 
-                # get memory usage
-                vmem = psutil.virtual_memory()
-                vmem_tot = vmem.total / 1024 / 1024 / 1024
-                vmem_pct = vmem.percent
+            # get general info
+            ncpu = psutil.cpu_count()
+            s = self.dbi.Session()
+            still = s.query(Still).filter(Still.hostname == hostname).one()
+            status = still.status
 
-                # get disk usage
-                du = psutil.disk_usage('/')
-                du_tot = du.total / 1024 / 1024 / 1024
-                du_pct = du.percent
+            # get memory usage
+            vmem = psutil.virtual_memory()
+            vmem_tot = vmem.total / 1024 / 1024 / 1024
+            vmem_pct = vmem.percent
 
-                # get time since boot in hr
-                now = time.time()
-                boot_time = psutil.boot_time()
-                dt_boot = now - boot_time
-                dt_boot_days = dt_boot / 60 / 60 / 24
+            # get disk usage
+            du = psutil.disk_usage('/')
+            du_tot = du.total / 1024 / 1024 / 1024
+            du_pct = du.percent
 
-                # call functions for interacting with M&C
-                mc_utils.add_mc_server_status(hostname, ip_addr, ncpu, cpu_usage, dt_boot_days,
-                                              vmem_pct, vmem_tot, du_pct, du_tot)
-                mc_utils.add_mc_rtp_status(status, dt_check_min, ntasks, dt_boot_hr)
+            # get time since boot in hr
+            now = time.time()
+            boot_time = psutil.boot_time()
+            dt_boot = now - boot_time
+            dt_boot_days = dt_boot / 60 / 60 / 24
+
+            # call functions for interacting with M&C
+            mc_utils.add_mc_server_status(hostname, ip_addr, ncpu, cpu_usage, dt_boot_days,
+                                          vmem_pct, vmem_tot, du_pct, du_tot)
+
+            # sleep
+            time.sleep(TIME_INT_FOR_NEW_MC_CHECK)
 
         return 0
 
@@ -673,13 +687,21 @@ class TaskServer(HTTPServer):
             self.drmaa_session.initialize()
         try:
             # Setup a thread that just updates the last checkin time for this
-            # still every 5min
+            # still every 10s
             timer_thread = threading.Thread(target=self.checkin_timer)
             # Make it a daemon so that when ctrl-c happens this thread goes
             # away
             timer_thread.daemon = True
             timer_thread.start()  # Start heartbeat
             self.serve_forever()  # Start the lisetenser server
+
+            if self.wf.log_to_mc:
+                # Also set up an M&C status thread
+                mc_thread = threading.Thread(target=self.mc_checkin_thread)
+                # Make it a daemon so that when ctrl-c happens this thread
+                # goes away
+                mc_thread.daemon = True
+                mc_thread.start()
         finally:
             self.shutdown()
         return
@@ -712,3 +734,26 @@ class TaskServer(HTTPServer):
                 self.drmaa_session.exit()  # Terminate DRMAA sessionmaker
 
             sys.exit(0)
+
+    def get_ip_address(self):
+        """Return an IP address for this machine as a string.
+
+        https://stackoverflow.com/questions/24196932/how-can-i-get-the-ip-address-of-eth0-in-python
+
+        This is actually not well defined -- machines have multiple interfaces,
+        each with its own IP address. We use eth0 if it exists, otherwise the
+        first one that isn't `lo`.
+
+        Copied from hera_mc/scripts/mc_server_status_daemon.py
+        """
+        try:
+            addrs = netifaces.ifaddresses('eth0')
+        except ValueError:
+            for ifname in sorted(netifaces.interfaces()):
+                if ifname != 'lo':
+                    addrs = netifaces.ifaddresses(ifname)
+                    break
+            else:  # triggered if we never did the 'break'
+                return '?.?.?.?'
+
+        return addrs[netifaces.AF_INET][0]['addr']
