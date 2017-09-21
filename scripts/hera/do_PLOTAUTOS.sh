@@ -1,3 +1,20 @@
 #! /bin/bash
 set -e
-plot_uv.py -a autos -t 1 --plot_each=time --pretty --xlim 0_1023 --max=2 --drng=8 -o ${1}.autos.png $1
+
+# get common functions
+source _common.sh
+
+# get basename
+fn=$(basename $1 uv)
+
+# define polarizations
+pol1="xx"
+
+# only run for first thread
+if is_same_pol $fn $pol1; then
+    # make wildcard filename
+    fn_wc=$(replace_pol $fn "??")
+
+    echo auto_view.py ${fn_wc}uv
+    auto_view.py ${fn_wc}uv
+fi
