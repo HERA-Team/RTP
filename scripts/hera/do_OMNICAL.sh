@@ -9,8 +9,6 @@ fn=$(basename $1 uv)
 # define polarizations
 pol1="xx"
 pol2="yy"
-pol3="xy"
-pol4="yx"
 
 # we only run omnical for the base filename
 if is_same_pol $fn $pol1; then
@@ -21,14 +19,12 @@ if is_same_pol $fn $pol1; then
     # define polarization file names
     fn1=$(replace_pol $fn $pol1)
     fn2=$(replace_pol $fn $pol2)
-    fn3=$(replace_pol $fn $pol3)
-    fn4=$(replace_pol $fn $pol4)
 
     # get firstcal file names
     # should be auto-pol (e.g., 'xx')
     declare -a FCAL_ARR
     idx=0
-    for f in $fn1 $fn2 $fn3 $fn4; do
+    for f in $fn1 $fn2; do
 	# test if file is a linear polarization
 	if is_lin_pol $f; then
 	    # add to array
@@ -50,8 +46,8 @@ if is_same_pol $fn $pol1; then
     fcal=$(join_by , "${FCAL_ARR[@]}")
 
     # make comma-separated list of polarizations
-    pols=$(join_by , $pol1 $pol2 $pol3 $pol4)
+    pols=$(join_by , $pol1 $pol2)
 
-    echo omni_run.py --metrics_json=$metrics_f --firstcal=$fcal -p $pols ${fn1}HH.uv ${fn2}HH.uv ${fn3}HH.uv ${fn4}HH.uv
-    omni_run.py --metrics_json=$metrics_f --firstcal=$fcal -p $pols ${fn1}HH.uv ${fn2}HH.uv ${fn3}HH.uv ${fn4}HH.uv
+    echo omni_run.py --metrics_json=$metrics_f --firstcal=$fcal -p $pols ${fn1}HH.uv ${fn2}HH.uv
+    omni_run.py --metrics_json=$metrics_f --firstcal=$fcal -p $pols ${fn1}HH.uv ${fn2}HH.uv
 fi
