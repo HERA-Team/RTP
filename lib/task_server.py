@@ -640,6 +640,7 @@ class TaskServer(HTTPServer):
             s = self.dbi.Session()
             still = s.query(Still).filter(Still.hostname == hostname).one()
             status = still.status
+            s.close()
 
             # get memory usage
             vmem = psutil.virtual_memory()

@@ -62,6 +62,7 @@ def main(args):
             nfailed += 1
         else:
             nworking += 1
+    s.close()
 
     # make sure we didn't have any observations fall through the cracks
     if ncomplete + nfailed + nworking != nobs:
