@@ -8,6 +8,7 @@ Summarize a given night's RTP status, and generate a report.
 from __future__ import print_function, division
 from astropy.time import Time
 import datetime
+import optparse
 
 # hacky way to import RTP libraries for interfacing with DB
 import os
@@ -16,7 +17,7 @@ basedir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__fil
 sys.path.insert(0, os.path.join(basedir, 'lib'))
 sys.path.insert(0, os.path.join(basedir, 'bin'))
 
-from dbi import DataBaseInterface
+from dbi import DataBaseInterface, Observation
 from still import get_dbi_from_config, SpawnerClass
 
 def main(args):
@@ -25,10 +26,10 @@ def main(args):
     o.set_usage('rtp_summary.py')
     o.set_description(__doc__)
     o.add_option('--config_file', help='RTP configuration file; default=etc/rtp_hera_h1c.cfg',
-                 default='etc/rtp_hera_h1c.cfg', dest=config_file, type=str)
+                 default='etc/rtp_hera_h1c.cfg', type=str)
     o.add_option('--date', help='JD for which to generate the status report;'
                  ' defaults to the current JD, minus 1 (i.e., the previous night\'s observation',
-                 dest=date, default=0, type=int)
+                 default=0, type=int)
     opts, args = o.parse_args(args)
 
     # create a database interface
@@ -58,7 +59,7 @@ def main(args):
     for obs in obsnums:
         if obs.status == "COMPLETE":
             ncomplete += 1
-        elif obs.current_stage_in_process == "FAILED":
+        elif obs.current_stage_in_progress == "FAILED":
             nfailed += 1
         else:
             nworking += 1
