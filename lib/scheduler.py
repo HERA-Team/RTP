@@ -229,7 +229,9 @@ class Scheduler(ThreadingMixIn, HTTPServer):
         # Class us into HTTPServer so we can make calls from TaskHandler into
         # this class via self.server.
         HTTPServer.__init__(self, (self.myhostname, 8080), MonitorHandler)
-        self.sg = sg  # Might as well have it around in case I find I need something from it...  Its just a little memory
+        # Might as well have it around in case I find I need something from it...
+        # Its just a little memory
+        self.sg = sg
         self.nstills = len(sg.hosts)  # preauto
         self.actions_per_still = sg.actions_per_still
         # Jon : This isn't used...
@@ -247,7 +249,9 @@ class Scheduler(ThreadingMixIn, HTTPServer):
 
         self.keep_running = False
         self.failcount = {}
-        self.wf = workflow  # Jon: Moved the workflow class to instantiated on object creation, should do the same for dbi probably
+        # Jon: Moved the workflow class to instantiated on object creation,
+        # should do the same for dbi probably
+        self.wf = workflow
         self.task_clients = {}
         self.stills = []
 
@@ -568,8 +572,17 @@ class Scheduler(ThreadingMixIn, HTTPServer):
         obsinfo = self.dbi.get_obs(obsnum)
         status = obsinfo.status
 
-        if obsinfo.current_stage_in_progress == "FAILED" or obsinfo.current_stage_in_progress == "KILLED":
-            return None
+        if (obsinfo.current_stage_in_progress == "FAILED" or
+            obsinfo.current_stage_in_progress == "KILLED"):
+            # Get the failcount, and retry action if we have only failed a few times.
+            # Some failures are due to MemoryErrors, and not due to underlying code problems
+            try:
+                failcount = self.failcount[str(action.obsinfo) + status]
+            except KeyError:
+                # we haven't failed yet
+                failcount = 0
+            if failcount >= MAXFAIL:
+                return None
 
         if status == 'COMPLETE':
             # logger.debug("COMPLETE for obsid : %s" % obsnum)  # You can see
