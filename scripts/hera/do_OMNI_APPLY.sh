@@ -14,5 +14,5 @@ pol=$(get_pol $fn)
 nopol_base=$(remove_pol $fn)
 omni_f=`echo ${nopol_base}HH.uv.omni.calfits`
 
-echo omni_apply.py -p $pol --omnipath=$omni_f --extension=O ${fn}HH.uv
-omni_apply.py -p $pol --omnipath=$omni_f --extension=O ${fn}HH.uv
+echo omni_apply.py -p $pol --omnipath=$omni_f --extension=O --overwrite ${fn}HH.uv
+omni_apply.py -p $pol --omnipath=$omni_f --extension=O --overwrite ${fn}HH.uv
