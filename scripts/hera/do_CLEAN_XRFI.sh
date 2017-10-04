@@ -15,10 +15,11 @@ rm -rf ${basename}HH.uvO.flag_summary.npz
 echo rm -rf ${basename}HH.uvO.flags.npz
 rm -rf ${basename}HH.uvO.flags.npz
 if is_same_pol ${basename} ${pol1}; then
-    echo rm -rf ${basename}HH.uv.vis.uvfits.flags.npz
-    rm -rf ${basename}HH.uv.vis.uvfits.flags.npz
-    echo rm -rf ${basename}HH.uv.omni.calfits.x.flags.npz
-    rm -rf ${basename}HH.uv.omni.calfits.x.flags.npz
-    echo rm -rf ${basename}HH.uv.omni.calfits.g.flags.npz
-    rm -rf ${basename}HH.uv.omni.calfits.g.flags.npz
+    nopol_base=$(remove_pol $basename)
+    echo rm -rf ${nopol_base}HH.uv.vis.uvfits.flags.npz
+    rm -rf ${nopol_base}HH.uv.vis.uvfits.flags.npz
+    echo rm -rf ${nopol_base}HH.uv.omni.calfits.x.flags.npz
+    rm -rf ${nopol_base}HH.uv.omni.calfits.x.flags.npz
+    echo rm -rf ${nopol_base}HH.uv.omni.calfits.g.flags.npz
+    rm -rf ${nopol_base}HH.uv.omni.calfits.g.flags.npz
 fi
