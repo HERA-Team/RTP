@@ -30,7 +30,7 @@ bn=$(basename $1 uv)
 
 # Define parameters for the xrfi algorithm.
 # See documentation in the hera_qm repo for more information about each parameter.
-KT_SIZE=7
+KT_SIZE=8
 KF_SIZE=8
 SIG_INIT=6
 SIG_ADJ=2
