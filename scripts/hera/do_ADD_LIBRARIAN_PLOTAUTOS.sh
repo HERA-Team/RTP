@@ -31,6 +31,7 @@ if is_same_pol $fn $pol1; then
     autos=`echo ${nopol_base}auto_specs.png`
     pos=`echo ${nopol_base}auto_v_pos.png`
     rxr=`echo ${nopol_base}auto_v_rxr.png`
+    rms=`echo ${nopol_base}auto_rms_values.png`
 
     #store_path tells the librarian where the data came within the librarian
     #basename of the store_path is just the filename
@@ -44,5 +45,6 @@ if is_same_pol $fn $pol1; then
     upload_to_librarian.py ${conn} ${pos} ${store_path}/${pos}
     echo upload_to_librarian.py ${conn} ${rxr} ${store_path}/${rxr}
     upload_to_librarian.py ${conn} ${rxr} ${store_path}/${rxr}
+    echo upload_to_librarian.py ${conn} ${rms} ${store_path}/${rms}
+    upload_to_librarian.py ${conn} ${rms} ${store_path}/${rms}
 fi
-    

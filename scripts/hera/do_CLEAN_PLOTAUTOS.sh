@@ -17,8 +17,10 @@ if is_same_pol $fn $pol1; then
     autos=`echo ${nopol_base}auto_specs.png`
     pos=`echo ${nopol_base}auto_v_pos.png`
     rxr=`echo ${nopol_base}auto_v_rxr.png`
+    rms=`echo ${nopol_base}auto_rms_values.png`
 
     rm -rf ${autos}
     rm -rf ${pos}
     rm -rf ${rxr}
+    rm -rf ${rms}
 fi
