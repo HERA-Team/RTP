@@ -58,3 +58,12 @@ function replace_pol ()
     local new_fn=$(echo $1 | sed -E "s/$pol/$2/")
     echo "$new_fn"
 }
+
+function prep_exants ()
+# take in an ex_ants file, which has one "bad antenna" per line,
+# and convert to a comma-separated list
+# taken from https://stackoverflow.com/questions/1251999/how-can-i-replace-a-newline-n-using-sed
+{
+    local csl=$(cat $1 | sed -e ':a' -e 'N' -e '$!ba' -e 's/\n/,/g')
+    echo "$csl"
+}
