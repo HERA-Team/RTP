@@ -221,7 +221,6 @@ class Scheduler(ThreadingMixIn, HTTPServer):
     ###
 
     def __init__(self, task_clients, workflow, sg):
-
         global logger
         logger = sg.logger
         self.myhostname = socket.gethostname()
@@ -340,7 +339,6 @@ class Scheduler(ThreadingMixIn, HTTPServer):
         last_checked_for_mc = time.time()
 
         while self.keep_running:
-
             if (time.time() - last_checked_for_stills) > TIME_INT_FOR_NEW_TM_CHECK:
                 self.find_all_taskmanagers()
                 last_checked_for_stills = time.time()
@@ -387,8 +385,7 @@ class Scheduler(ThreadingMixIn, HTTPServer):
                     continue
 
                 # I think this will work
-                while len(self.get_launched_actions(tm, tx=False)
-                          ) < tm_info.max_num_of_tasks:
+                while len(self.get_launched_actions(tm, tx=False)) < tm_info.max_num_of_tasks:
                     # logger.debug("Number of launched actions : %s" % len(self.get_launched_actions(tm, tx=False)))
                     # FIXME: MIght still be having a small issue when a TM goes
                     # offline and back on
@@ -534,18 +531,30 @@ class Scheduler(ThreadingMixIn, HTTPServer):
         '''Based on the current list of active obs (which you might want
         to update first), generate a prioritized list of actions that
         can be taken.'''
-
         actions = []
         for myobs in self.active_obs:
             myobs_info = self.dbi.get_obs(myobs)
-            if myobs_info.current_stage_in_progress == "FAILED" or myobs_info.current_stage_in_progress == "KILLED" or myobs_info.status == "COMPLETE" or (
-                    myobs_info.stillhost not in self.task_clients and myobs_info.stillhost):
-                self.active_obs_dict.pop(myobs_info.obsnum)
-                self.active_obs.remove(myobs_info.obsnum)
-
-                logger.debug("update_action_queue: Removing obsid : %s, task : %s, Status: %s, TM: %s" % (
-                    myobs_info.obsnum, myobs_info.current_stage_in_progress, myobs_info.status, myobs_info.stillhost))
+            if myobs_info.status == "COMPLETE":
+                # remove from queue and clean out failcount dictionary
+                self.remove_obs_from_action_queue(myobs_info)
+                self.clean_failcount_dict(myobs_info)
+            elif (myobs_info.stillhost not in self.task_clients
+                  and myobs_info.stillhost):
+                # remove from queue
+                self.remove_obs_from_action_queue(myobs_info)
             else:
+                if (myobs_info.current_stage_in_progress == "FAILED"
+                    or myobs_info.current_stage_in_progress == "KILLED"):
+                    # Get the failcount, and retry action if we have only failed a few times.
+                    # Some failures are due to MemoryErrors, and not due to underlying code problems
+                    try:
+                        failcount = self.failcount[str(action.obsinfo) + status]
+                    except KeyError:
+                        # we should not reach this branch, but just in case...
+                        failcount = 0
+                    if failcount >= MAXFAIL:
+                        # actually remove it
+                        self.remove_obs_from_action_queue(myobs_info)
                 myaction = self.get_action(
                     myobs, ActionClass=ActionClass, action_args=action_args)
                 if (myaction is not None) and (
@@ -562,6 +571,20 @@ class Scheduler(ThreadingMixIn, HTTPServer):
 
         return
 
+    def remove_obs_from_action_queue(self, obsinfo):
+        '''
+        Remove observation from action_queue and print debug info.
+
+        Arguments:
+           obsinfo -- observation info from dbi.get_obs(obsid)
+        Returns:
+           None
+        '''
+        self.active_obs_dict.pop(obsinfo.obsnum)
+        self.active_obs.remove(obsinfo.obsnum)
+        logger.debug("update_action_queue: Removing obsid : {0}, task : {1}, Status: {2}, TM: {3}".format(
+            myobs_info.obsnum, myobs_info.current_stage_in_progress, myobs_info.status, myobs_info.stillhost))
+
     def get_action(self, obsnum, ActionClass=None, action_args=()):
         '''Find the next actionable step for obs f (one for which all
         prerequisites have been met.  Return None if no action is available.
@@ -571,18 +594,6 @@ class Scheduler(ThreadingMixIn, HTTPServer):
             None defaults to the standard Action'''
         obsinfo = self.dbi.get_obs(obsnum)
         status = obsinfo.status
-
-        if (obsinfo.current_stage_in_progress == "FAILED" or
-            obsinfo.current_stage_in_progress == "KILLED"):
-            # Get the failcount, and retry action if we have only failed a few times.
-            # Some failures are due to MemoryErrors, and not due to underlying code problems
-            try:
-                failcount = self.failcount[str(action.obsinfo) + status]
-            except KeyError:
-                # we haven't failed yet
-                failcount = 0
-            if failcount >= MAXFAIL:
-                return None
 
         if status == 'COMPLETE':
             # logger.debug("COMPLETE for obsid : %s" % obsnum)  # You can see
@@ -644,10 +655,8 @@ class Scheduler(ThreadingMixIn, HTTPServer):
 
         if not still:
             if self.initial_startup is True:
-
                 still = self.tm_cycle.next().hostname  # Balance out all the nodes on startup
             else:
-
                 # Get a still for a new obsid if one doesn't already exist.
                 still = self.obs_to_still(obsnum)
                 if still is False:
@@ -700,14 +709,17 @@ class Scheduler(ThreadingMixIn, HTTPServer):
 
     def obs_to_still(self, obs):
         ##############
-        #   Check if a obsid has a still already, if it does simply return it.  If it does not then lets find the lowest
-        #   loaded (cpu) one and assign it.  If none are under 80% then lets just wait around, they're busy enough as is.
+        #   Check if a obsid has a still already, if it does simply return it.
+        #   If it does not then lets find the lowest loaded (cpu) one and assign it.
+        #   If none are under 80% then lets just wait around, they're busy enough as is.
         ##############
         mystill = self.dbi.get_obs_still_host(obs)
         if mystill:
             if mystill in self.task_clients:
                 return mystill
-            else:  # We couldn't find its still server as its not in task_clients for whatever reason so punt for now
+            else:
+                # We couldn't find its still server as its not in task_clients for whatever reason,
+                # so punt for now
                 logger.debug(
                     "Obs attached to non-existant STILL OBS : %s, STILL %s" % (obs, mystill))
                 return 0
@@ -718,7 +730,18 @@ class Scheduler(ThreadingMixIn, HTTPServer):
             else:
                 return False
 
-#            while not still:
-#                logger.info("Can't find any available Task Managers, they are all above 80% usage or have gone offline.  Waiting...")
-#                time.sleep(10)
-#                still = self.dbi.get_most_available_still()
+    def clean_failcount_dict(self, obsinfo):
+        '''
+        Go through the failcount dictionary and clean out entries corresponding to the specified obsid.
+
+        Arguments:
+           obsinfo -- observation info from dbi.get_obs(obsid)
+        Returns:
+           None
+        '''
+        # we will match keys in the dict with a regex
+        # keys in the failcount dictionary are of the form obsid + task name
+        for key in self.failcount.keys():
+            if re.match(str(obsinfo.obsnum), key):
+                self.failcount.pop(key)
+        return
