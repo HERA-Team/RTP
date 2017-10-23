@@ -548,7 +548,7 @@ class Scheduler(ThreadingMixIn, HTTPServer):
                     # Get the failcount, and retry action if we have only failed a few times.
                     # Some failures are due to MemoryErrors, and not due to underlying code problems
                     try:
-                        failcount = self.failcount[str(action.obsinfo) + status]
+                        failcount = self.failcount[str(myobs_info.obsnum) + myobs_info.status]
                     except KeyError:
                         # we should not reach this branch, but just in case...
                         failcount = 0
@@ -583,7 +583,7 @@ class Scheduler(ThreadingMixIn, HTTPServer):
         self.active_obs_dict.pop(obsinfo.obsnum)
         self.active_obs.remove(obsinfo.obsnum)
         logger.debug("update_action_queue: Removing obsid : {0}, task : {1}, Status: {2}, TM: {3}".format(
-            myobs_info.obsnum, myobs_info.current_stage_in_progress, myobs_info.status, myobs_info.stillhost))
+            obsinfo.obsnum, obsinfo.current_stage_in_progress, obsinfo.status, obsinfo.stillhost))
 
     def get_action(self, obsnum, ActionClass=None, action_args=()):
         '''Find the next actionable step for obs f (one for which all
