@@ -549,12 +549,24 @@ class Scheduler(ThreadingMixIn, HTTPServer):
                     # Some failures are due to MemoryErrors, and not due to underlying code problems
                     try:
                         failcount = self.failcount[str(myobs_info.obsnum) + myobs_info.status]
+                        logger.debug("update_action_queue: Retrying obsid : {0}, task : {1}, Status: {2}, "
+                                     "TM: {3}, Failcount: {4}".format(
+                                         myobs_info.obsnum, myobs_info.current_stage_in_progress,
+                                         myobs_info.status, myobs_info.stillhost, failcount))
                     except KeyError:
                         # we should not reach this branch, but just in case...
                         failcount = 0
+                        logger.debug("update_action_queue: Retrying obsid : {0}, task : {1}, Status: {2}, "
+                                     "TM: {3}, Failcount: {4} (except branch)".format(
+                                         myobs_info.obsnum, myobs_info.current_stage_in_progress,
+                                         myobs_info.status, myobs_info.stillhost, failcount))
                     if failcount >= MAXFAIL:
                         # actually remove it
                         self.remove_obs_from_action_queue(myobs_info)
+                    else:
+                        # reset database
+                        status = self.dbi.get_obs_status(myobs_info.obsnum)
+                        self.dbi.update_obs_current_stage(myobs_info.obsnum, status)
                 myaction = self.get_action(
                     myobs, ActionClass=ActionClass, action_args=action_args)
                 if (myaction is not None) and (
