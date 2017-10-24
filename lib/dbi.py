@@ -289,6 +289,8 @@ class DataBaseInterface(object):
 
         except:
             logger.debug("No open observations found.")
+            s.close()
+            return []
         s.close()
         return obsnums
 
