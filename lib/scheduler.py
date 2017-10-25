@@ -556,7 +556,7 @@ class Scheduler(ThreadingMixIn, HTTPServer):
                         # we should not reach this branch, but just in case...
                         failcount = 0
                         logger.debug("update_action_queue: Retrying obsid : {0}, task : {1}, Status: {2}, "
-                                     "TM: {3}, Failcount: {4} (except branch)".format(
+                                     "TM: {3}, Failcount: {4}".format(
                                          myobs_info.obsnum, myobs_info.current_stage_in_progress,
                                          myobs_info.status, myobs_info.stillhost, failcount))
                     if failcount >= MAXFAIL:
