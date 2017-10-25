@@ -308,7 +308,6 @@ class Scheduler(ThreadingMixIn, HTTPServer):
             self.launched_actions.pop(tm_info.hostname, None)
             self.task_clients.pop(tm_info.hostname, None)
             for obs in self.dbi.get_obs_assigned_to_still(tm_info.hostname):
-
                 if obs.obsnum in self.active_obs_dict:
                     self.active_obs_dict.pop(obs.obsnum)
                     self.active_obs.remove(obs.obsnum)
@@ -563,6 +562,8 @@ class Scheduler(ThreadingMixIn, HTTPServer):
                     if failcount >= MAXFAIL:
                         # actually remove it
                         self.remove_obs_from_action_queue(myobs_info)
+                        # set status to "KILLED" in db to prevent further attempts
+                        self.dbi.update_obs_current_stage(myobs_info.obsnum, "KILLED")
                     else:
                         # reset database
                         status = self.dbi.get_obs_status(myobs_info.obsnum)

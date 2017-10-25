@@ -278,9 +278,8 @@ class DataBaseInterface(object):
     def list_open_observations_on_tm(self, tm_hostname=None):
         s = self.Session()
         try:
+            # this makes the scheduler retry "FAILED" actions, but not "KILLED" ones
             obsnums = [obs.obsnum for obs in s.query(Observation).
-                       filter((Observation.current_stage_in_progress != 'FAILED') |
-                              (Observation.current_stage_in_progress.is_(None))).
                        filter((Observation.current_stage_in_progress != 'KILLED') |
                               (Observation.current_stage_in_progress.is_(None))).
                        filter(Observation.status != 'NEW').
