@@ -48,8 +48,12 @@ if is_same_pol $fn $pol1; then
     # make comma-separated list of polarizations
     pols=$(join_by , $pol1 $pol2)
 
-    # make comma-separated list of ex_ants
-    exants=$(prep_exants ~/src/hera_cal/hera_cal/calibrations/herahex_ex_ants.txt)
+    # assume optional second argument is location of ex_ants file
+    if [ "$#" -gt 1 ]; then
+	exants=$(prep_exants ${2})
+    else
+	exants=""
+    fi
 
     echo omni_run.py --metrics_json=$metrics_f --firstcal=$fcal --ex_ants=${exants} -p $pols ${fn1}HH.uv ${fn2}HH.uv
     omni_run.py --metrics_json=$metrics_f --firstcal=$fcal --ex_ants=${exants} -p $pols ${fn1}HH.uv ${fn2}HH.uv
