@@ -2,7 +2,8 @@
 set -e
 
 # import common functions
-source _common.sh
+src_dir="$(dirname "$0")"
+source ${src_dir}/_common.sh
 
 conn=${1}
 store_path=${2}

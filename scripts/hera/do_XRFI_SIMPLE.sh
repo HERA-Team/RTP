@@ -1,8 +1,9 @@
 #! /bin/bash
 set -e
 
-# get useful functions
-source _common.sh
+# import common functions
+src_dir="$(dirname "$0")"
+source ${src_dir}/_common.sh
 
 # make the file name
 bn=$(basename $1 uv)

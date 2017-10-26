@@ -1,8 +1,9 @@
 #! /bin/bash
 set -e
 
-# load common funcitons
-source _common.sh
+# import common functions
+src_dir="$(dirname "$0")"
+source ${src_dir}/_common.sh
 
 fn=$(basename $1 uv)
 

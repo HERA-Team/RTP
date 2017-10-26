@@ -12,8 +12,9 @@ set -e
 #
 # XXX redundant with the other do_*_LIBRARIAN.sh scripts
 
-# get common functions
-source _common.sh
+# import common functions
+src_dir="$(dirname "$0")"
+source ${src_dir}/_common.sh
 
 conn="$1"
 store_path="$2"

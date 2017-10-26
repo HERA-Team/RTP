@@ -1,8 +1,9 @@
 #! /bin/bash
 set -e
 
-# get common functions
-source _common.sh
+# import common functions
+src_dir="$(dirname "$0")"
+source ${src_dir}/_common.sh
 
 if is_lin_pol $1; then
     basename=$(basename $1 uv)

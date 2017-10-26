@@ -1,8 +1,9 @@
 #!/bin/bash
 set -e
 
-# load common functions
-source _common.sh
+# import common functions
+src_dir="$(dirname "$0")"
+source ${src_dir}/_common.sh
 
 # define polarization
 pol1="xx"
