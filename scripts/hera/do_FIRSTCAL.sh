@@ -16,7 +16,7 @@ if is_lin_pol $fn; then
     if [ "$#" -gt 1 ]; then
 	exants=$(prep_exants ${2})
     else
-	exants=""
+	exants=$(prep_exants ~/src/hera_cal/hera_cal/calibrations/herahex_ex_ants.txt)
     fi
     echo firstcal_run.py --metrics_json=$metrics_f --ex_ants=${exants} --pol=$pol ${fn}HH.uv
     firstcal_run.py --metrics_json=$metrics_f --ex_ants=${exants} --pol=$pol ${fn}HH.uv
