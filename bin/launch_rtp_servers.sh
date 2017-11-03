@@ -21,23 +21,23 @@ tmux split-window -v
 ##NODE setup
 tmux select-pane -t 0
 tmux send-keys "ssh still1" C-m
-tmux send-keys "source activate HERA" C-m
-tmux send-keys "~/src/RTP/bin/still.py --server --config_file=/home/obs/src/RTP/etc/rtp_hera_test1.cfg" C-m
+tmux send-keys "source activate RTP" C-m
+tmux send-keys "~/src/RTP/bin/still.py --server --config_file=/home/obs/src/RTP/etc/rtp_hera_h1c.cfg" C-m
 
 tmux select-pane -t 1
 tmux send-keys "ssh still2" C-m
-tmux send-keys "source activate HERA" C-m
-tmux send-keys "~/src/RTP/bin/still.py --server --config_file=/home/obs/src/RTP/etc/rtp_hera_test1.cfg" C-m
+tmux send-keys "source activate RTP" C-m
+tmux send-keys "~/src/RTP/bin/still.py --server --config_file=/home/obs/src/RTP/etc/rtp_hera_h1c.cfg" C-m
 
 tmux select-pane -t 2
 tmux send-keys "ssh still3" C-m
-tmux send-keys "source activate HERA" C-m
-tmux send-keys "~/src/RTP/bin/still.py --server --config_file=/home/obs/src/RTP/etc/rtp_hera_test1.cfg" C-m
+tmux send-keys "source activate RTP" C-m
+tmux send-keys "~/src/RTP/bin/still.py --server --config_file=/home/obs/src/RTP/etc/rtp_hera_h1c.cfg" C-m
 
 tmux select-pane -t 3
 tmux send-keys "ssh still4" C-m
-tmux send-keys "source activate HERA" C-m
-tmux send-keys "~/src/RTP/bin/still.py --server --config_file=/home/obs/src/RTP/etc/rtp_hera_test1.cfg" C-m
+tmux send-keys "source activate RTP" C-m
+tmux send-keys "~/src/RTP/bin/still.py --server --config_file=/home/obs/src/RTP/etc/rtp_hera_h1c.cfg" C-m
 
 #tmux select-pane -t 4
 #tmux send-keys "ssh node04" C-m

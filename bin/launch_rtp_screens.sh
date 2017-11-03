@@ -25,12 +25,12 @@ screen -S $SESSION -p 3 -X title "Monitoring"
 
 newline='
 '
-screen -S $SESSION -p "RTP Client" -X stuff "source activate HERA$newline"
-screen -S $SESSION -p "RTP Client" -X stuff "bin/still.py --config_file=etc/rtp_hera_test1.cfg --client" #$newline"
-screen -S $SESSION -p "RTP Servers" -X stuff "source activate HERA$newline"
+screen -S $SESSION -p "RTP Client" -X stuff "source activate RTP$newline"
+screen -S $SESSION -p "RTP Client" -X stuff "bin/still.py --config_file=etc/rtp_hera_h1c.cfg --client" #$newline"
+screen -S $SESSION -p "RTP Servers" -X stuff "source activate RTP$newline"
 screen -S $SESSION -p "RTP Servers" -X stuff "bin/launch_rtp_servers.sh" #$newline"
-screen -S $SESSION -p "Deployment" -X stuff "source activate HERA$newline"
-screen -S $SESSION -p "Monitoring" -X stuff "source activate HERA$newline"
+screen -S $SESSION -p "Deployment" -X stuff "source activate RTP$newline"
+screen -S $SESSION -p "Monitoring" -X stuff "source activate RTP$newline"
 
 # The "select" command doesn't seem to work in -X mode so we can't magically
 # switch back to the Client window. Oh well.
