@@ -69,7 +69,8 @@ def main(args):
         for obs in obsnums:
             if obs.status == "COMPLETE":
                 ncomplete += 1
-            elif obs.current_stage_in_progress == "FAILED":
+            elif (obs.current_stage_in_progress == "FAILED"
+                  or obs.current_stage_in_progress == "KILLED"):
                 nfailed += 1
             else:
                 nworking += 1
