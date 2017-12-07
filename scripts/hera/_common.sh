@@ -67,3 +67,10 @@ function prep_exants ()
     local csl=$(cat $1 | sed -e ':a' -e 'N' -e '$!ba' -e 's/\n/,/g')
     echo "$csl"
 }
+
+function query_exants_db ()
+# use hera_mc to get a list of "dubitible" antennas from cm database
+{
+    local exants=`python -c "from hera_mc import sys_handling; H = sys_handling.Handling(); print H.get_dubitable_list()"`
+    echo "$exants"
+}
