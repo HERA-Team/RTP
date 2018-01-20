@@ -28,7 +28,7 @@ def main(args):
     o.add_option('--config_file', help='RTP configuration file; default=etc/rtp_hera_h1c.cfg',
                  default='etc/rtp_hera_h1c.cfg', type=str)
     o.add_option('--date', help='JD for which to generate the status report;'
-                 ' defaults to the current JD, minus 1 (i.e., the previous night\'s observation',
+                 ' defaults to the current JD, minus 1 (i.e., the previous night\'s observation)',
                  default=0, type=int)
     opts, args = o.parse_args(args)
 
