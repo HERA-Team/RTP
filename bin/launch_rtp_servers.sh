@@ -15,7 +15,11 @@ tmux select-pane -t 0
 tmux split-window -v
 tmux select-pane -t 2
 tmux split-window -v
-
+tmux select-pane -t 1
+tmux split-window -h
+tmux select-pane -t 4
+tmux split-window -h
+tmux select-layout tiled
 
 
 ##NODE setup
@@ -36,6 +40,16 @@ tmux send-keys "~/src/RTP/bin/still.py --server --config_file=/home/obs/src/RTP/
 
 tmux select-pane -t 3
 tmux send-keys "ssh still4" C-m
+tmux send-keys "source activate RTP" C-m
+tmux send-keys "~/src/RTP/bin/still.py --server --config_file=/home/obs/src/RTP/etc/rtp_hera_h1c.cfg" C-m
+
+tmux select-pane -t 4
+tmux send-keys "ssh cask0" C-m
+tmux send-keys "source activate RTP" C-m
+tmux send-keys "~/src/RTP/bin/still.py --server --config_file=/home/obs/src/RTP/etc/rtp_hera_h1c.cfg" C-m
+
+tmux select-pane -t 5
+tmux send-keys "ssh cask1" C-m
 tmux send-keys "source activate RTP" C-m
 tmux send-keys "~/src/RTP/bin/still.py --server --config_file=/home/obs/src/RTP/etc/rtp_hera_h1c.cfg" C-m
 
