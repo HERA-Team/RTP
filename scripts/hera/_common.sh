@@ -59,6 +59,15 @@ function replace_pol ()
     echo "$new_fn"
 }
 
+function get_jd ()
+# function for extracting Julian date (JD) from filename
+# assumes the typical file format, and keys in on pattern "zen.xxxxxxx.xxxxx.*"
+# returns "xxxxxxx.xxxxx" as a string
+{
+    local jd=$(echo $1 | sed -E 's/zen\.([0-9]{7}\.[0-9]{5})\..*$/\1/')
+    echo "$jd"
+}
+
 function prep_exants ()
 # take in an ex_ants file, which has one "bad antenna" per line,
 # and convert to a comma-separated list
@@ -71,6 +80,13 @@ function prep_exants ()
 function query_exants_db ()
 # use hera_mc to get a list of "dubitible" antennas from cm database
 {
-    local exants=`python -c "from hera_mc import sys_handling; H = sys_handling.Handling(); print H.get_dubitable_list()"`
+    if [ "$#" -gt 0 ]; then
+	# assume argument is filename; extract JD from it and pass it in to dubitable command as desired time for dubi list
+	local jd=$(get_jd $1)
+	local exants=`python -c "from hera_mc import sys_handling; from astropy.time import Time; t = Time($jd, format='jd'); H = sys_handling.Handling(); print H.get_dubitable_list(date=t)"`
+    else
+	# default to "now" == when the script is being run
+	local exants=`python -c "from hera_mc import sys_handling; H = sys_handling.Handling(); print H.get_dubitable_list()"`
+    fi
     echo "$exants"
 }

@@ -53,7 +53,7 @@ if is_same_pol $fn $pol1; then
     if [ "$#" -gt 1 ]; then
 	exants=$(prep_exants ${2})
     else
-	exants=$(query_exants_db)
+	exants=$(query_exants_db ${fn})
     fi
 
     echo omni_run.py --metrics_json=$metrics_f --firstcal=$fcal --ex_ants=${exants} -p $pols ${fn1}HH.uv ${fn2}HH.uv
