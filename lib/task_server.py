@@ -14,6 +14,7 @@ import psutil
 import pickle
 import subprocess
 import netifaces
+from astropy.time import Time
 
 from string import upper
 
@@ -54,6 +55,10 @@ class Task:
         self.drmaa_args = drmaa_args
         self.drmaa_queue = drmaa_queue
         self.stdout_stderr_file = ''
+        self.max_mem = 0.
+        self.avg_cpu_load = 0.
+        self.n_cpu_load_polls = 0
+        self.start_time = Time.now()
 
     def remove_file_if_exists(self, filename):
         try:
@@ -241,11 +246,25 @@ class Task:
         self.remove_file_if_exists(self.stdout_stderr_file)
 
         if self.ts.wf.log_to_mc:
-            # log to M&C
+            # log completion time to M&C
             import mc_utils
             mc_utils.add_mc_process_event(self.obs, "finished")
             mc_utils.add_mc_process_record(self.obs, self.ts.wf.workflow_actions,
                                         self.ts.wf.workflow_actions_endfile)
+            # log task resources to M&C
+            stop_time = Time.now()
+            if self.max_mem > 0:
+                max_mem = self.max_mem
+            else:
+                max_mem = None
+            if self.n_cpu_load_polls > 0:
+                avg_cpu = self.avg_cpu_load / self.n_cpu_load_polls
+            else:
+                avg_cpu = None
+            mc_utils.add_mc_task_resource_record(self.obs, self.task, self.start_time,
+                                                 self.stop_time, max_mem, avg_cpu)
+
+        return
 
 
 class TaskClient:
@@ -573,12 +592,18 @@ class TaskServer(HTTPServer):
                     try:
                         child_proc = mytask.process.children()[0]
                         if psutil.pid_exists(child_proc.pid):
+                            cpu = child_proc.cpu_percent(interval=1.0)
+                            mem_pct = child_proc.memory_percent()
+                            mem_mb = mem_pct * psutil.virtual_memory().total / 1048576 # == 2**20, to convert to MB
+                            # save in task object
+                            mytask.max_mem = max(mytask.max_mem, mem_mb)
+                            mytask.cpu_load_avg += cpu / 100.
+                            mytask.n_cpu_load_polls += 1
+                            # echo out to screen
                             logger.debug('Proc info on {obsnum}:{task}:{pid} - cpu={cpu:.1f}%,'
                                          ' mem={mem:.1f}%, Naffinity={aff}'.format(
                                              obsnum=mytask.obs, task=mytask.task, pid=child_proc.pid,
-                                             cpu=child_proc.cpu_percent(
-                                                 interval=1.0),
-                                             mem=child_proc.memory_percent(), aff=len(child_proc.cpu_affinity())))
+                                             cpu=cpu, mem=mem_pct, aff=len(child_proc.cpu_affinity())))
                     except:
                         pass
                 self.watchdog_count = 0

@@ -5,6 +5,8 @@ import cPickle as pickle
 import sys
 import os
 import time
+import math
+import numpy as np
 basedir = os.path.dirname(os.path.realpath(__file__)).replace("unit_tests", "")
 sys.path.append(basedir + 'lib')
 sys.path.append(basedir + 'bin')
@@ -79,6 +81,14 @@ class TestMCUtils(TestHERAMC):
         # RTP Process Record
         self.workflow_actions = ['UV', 'ANT_METRICS', 'FIRSTCAL', 'OMNICAL', 'XRFI']
         self.workflow_actions_endfile = ['CLEAN_ANT_METRICS', 'CLEAN_XRFI']
+
+        # RTP Task Resource Record
+        self.task_name = 'OMNICAL'
+        self.task_name2 = 'FIRSTCAL'
+        self.start_time = Time.now()
+        self.stop_time = self.start_time + TimeDelta(10 * 60, format='sec')
+        self.max_memory = 16.2
+        self.avg_cpu_load = 1.
 
     def test_add_mc_server_status(self):
         # add to db
@@ -253,3 +263,68 @@ class TestMCUtils(TestHERAMC):
 
         # clean up after ourselves
         os.remove(pr_fn)
+
+
+    def test_add_mc_task_resource_record(self):
+        # add observation to db
+        self.test_session.add_obs(*self.observation_values)
+        obs_result = self.test_session.get_obs()
+        nt.assert_equal(len(obs_result), 1)
+
+        # add process record to db
+        mc_utils.add_mc_task_resource_record(self.obsid, self.task_name, self.start_time, self.stop_time,
+                                             self.max_memory, self.avg_cpu_load, mcs=self.test_session)
+
+        # retrieve record and check that it matches
+        result = self.test_session.get_rtp_task_resource_record(self.time - TimeDelta(2, format='sec'))
+        nt.assert_equal(len(result), 1)
+
+        # the time of the entry is not controlled by RTP, so don't check that
+        result = result[0]
+        nt.assert_equal(result.obsid, self.obsid)
+        nt.assert_equal(result.task_name, self.task_name)
+        nt.assert_equal(result.start_time, math.floor(self.start_time.gps))
+        nt.assert_equal(result.stop_time, math.floor(self.stop_time.gps))
+        nt.assert_true(np.isclose(result.max_memory, self.max_memory))
+        nt.assert_true(np.isclose(result.avg_cpu_load, self.avg_cpu_load))
+
+        # test adding with no memory or cpu load
+        # change task name to avoid conflict
+        mc_utils.add_mc_task_resource_record(self.obsid, self.task_name2, self.start_time, self.stop_time,
+                                             mcs=self.test_session)
+
+        # retrieve the record and check that it matches
+        result = self.test_session.get_rtp_task_resource_record(self.start_time - TimeDelta(2, format='sec'),
+                                                                stoptime=self.time + TimeDelta(1e3, format='sec'))
+        nt.assert_equal(len(result), 2)
+
+        # check that everything is correct
+        result = result[1]
+        nt.assert_equal(result.obsid, self.obsid)
+        nt.assert_equal(result.task_name, self.task_name2)
+        nt.assert_equal(result.start_time, math.floor(self.start_time.gps))
+        nt.assert_equal(result.stop_time, math.floor(self.stop_time.gps))
+
+        # test dumping to a pickle and reading it back in
+        # feeding in nonsense for an MCSession will trigger the "except" branch
+        mc_utils.add_mc_task_resource_record(self.obsid, self.task_name, self.start_time, self.stop_time,
+                                             mcs='blah', outdir=os.getcwd())
+
+        # read in pickle from disk
+        # there should only be one
+        for fn in os.listdir(os.getcwd()):
+            if 'trr_' in fn:
+                trr_fn = fn
+                break
+
+        with open(trr_fn, 'r') as f:
+            info_dict = pickle.load(f)
+
+        # check that dictionary entries match data
+        nt.assert_equal(info_dict['obsid'], self.obsid)
+        nt.assert_equal(info_dict['task_name'], self.task_name)
+        nt.assert_equal(info_dict['start_time'], math.floor(self.start_time.gps))
+        nt.assert_equal(info_dict['stop_time'], math.floor(self.stop_time.gps))
+
+        # clean up after ourselves
+        os.remove(trr_fn)

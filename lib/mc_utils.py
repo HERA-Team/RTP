@@ -247,3 +247,62 @@ def add_mc_process_record(obsid, workflow_actions, workflow_actions_endfile=None
             pickle.dump(info_dict, f)
 
     return
+
+
+def add_mc_task_resource_record(obsid, task_name, start_time, stop_time, max_memory=None, avg_cpu_load=None,
+                                mcs=None, outdir=None):
+    """
+    Add the resources used by an RTP task to HERA M&C database.
+
+    This function creates a new obsid + task entry in the rtp_task_resource_record DB, which contains
+    the start-time and stop-time. If present, the maximum memory usage (in MB) and average cpu usage
+    (in number of processors) is saved as well.
+
+    Since we want to be able to backfill this information if M&C is not reachable,
+    in the event we can't connect to the db, we will dump to disk (as a pickle)
+    to be read in later.
+
+    Args:
+    ====================
+    obsid: string
+       Obsid of the process
+    task: string
+       Name of RTP task (e.g., OMNICAL)
+    start_time: astropy Time object
+       Start time of the task
+    stop_time: astropy Time object
+       Stop time of the task
+    max_mem: float, optional
+       Maximum amount of memory used by a task, in MB
+    avg_cpu_load: float, optional
+       Average number of CPU processors used to complete the task
+    mcs: MCSession, optional
+       MCSession event to connect to. If not provided, start a new one. This
+       is for making testing easier, and might go away later.
+    outdir: string, optional
+       Directory to save file to, if M&C is not present. Defaults to __mc_path.
+
+    Return:
+    ====================
+    None
+    """
+    try:
+        if mcs is None:
+            mcs = _get_new_mc_session()
+        mcs.add_rtp_task_resource_record(obsid, task_name, start_time, stop_time, max_memory, avg_cpu_load)
+    except:
+        # save to disk
+        start_time = math.floor(start_time.gps)
+        stop_time = math.floor(stop_time.gps)
+        info_dict = {"obsid": obsid, "task_name": task_name, "start_time": start_time,
+                     "stop_time": stop_time, "max_memory": max_memory, "avg_cpu_load": avg_cpu_load}
+        filename = "trr_{0}_{1}.pkl".format(obsid, task_name)
+        if outdir is None:
+            od = __mc_path
+        else:
+            od = outdir
+        whole_path = os.path.join(od, filename)
+        with open(whole_path, 'w') as f:
+            pickle.dump(info_dict, f)
+
+    return
