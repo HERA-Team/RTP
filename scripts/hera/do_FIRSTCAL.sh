@@ -18,6 +18,6 @@ if is_lin_pol $fn; then
     else
 	exants=$(query_exants_db ${fn})
     fi
-    echo firstcal_run.py --metrics_json=$metrics_f --ex_ants=${exants} --pol=$pol ${fn}HH.uv
-    firstcal_run.py --metrics_json=$metrics_f --ex_ants=${exants} --pol=$pol ${fn}HH.uv
+    echo firstcal_run.py --metrics_json=$metrics_f --ex_ants=${exants} --pol=$pol --overwrite ${fn}HH.uv
+    firstcal_run.py --metrics_json=$metrics_f --ex_ants=${exants} --pol=$pol --overwrite ${fn}HH.uv
 fi

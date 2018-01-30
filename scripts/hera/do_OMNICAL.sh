@@ -56,6 +56,6 @@ if is_same_pol $fn $pol1; then
 	exants=$(query_exants_db ${fn})
     fi
 
-    echo omni_run.py --metrics_json=$metrics_f --firstcal=$fcal --ex_ants=${exants} -p $pols ${fn1}HH.uv ${fn2}HH.uv
-    omni_run.py --metrics_json=$metrics_f --firstcal=$fcal --ex_ants=${exants} -p $pols ${fn1}HH.uv ${fn2}HH.uv
+    echo omni_run.py --metrics_json=$metrics_f --firstcal=$fcal --ex_ants=${exants} -p $pols --overwrite ${fn1}HH.uv ${fn2}HH.uv
+    omni_run.py --metrics_json=$metrics_f --firstcal=$fcal --ex_ants=${exants} -p $pols --overwrite ${fn1}HH.uv ${fn2}HH.uv
 fi
