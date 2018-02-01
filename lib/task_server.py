@@ -597,7 +597,7 @@ class TaskServer(HTTPServer):
                             mem_mb = mem_pct * psutil.virtual_memory().total / 1048576 # == 2**20, to convert to MB
                             # save in task object
                             mytask.max_mem = max(mytask.max_mem, mem_mb)
-                            mytask.cpu_load_avg += cpu / 100.
+                            mytask.avg_cpu_load += cpu / 100.
                             mytask.n_cpu_load_polls += 1
                             # echo out to screen
                             logger.debug('Proc info on {obsnum}:{task}:{pid} - cpu={cpu:.1f}%,'
