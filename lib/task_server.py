@@ -594,7 +594,7 @@ class TaskServer(HTTPServer):
                         if psutil.pid_exists(child_proc.pid):
                             cpu = child_proc.cpu_percent(interval=1.0)
                             mem_pct = child_proc.memory_percent()
-                            mem_mb = mem_pct * psutil.virtual_memory().total / 1048576 # == 2**20, to convert to MB
+                            mem_mb = mem_pct / 100 * psutil.virtual_memory().total / 1048576 # == 2**20, to convert to MB
                             # save in task object
                             mytask.max_mem = max(mytask.max_mem, mem_mb)
                             mytask.avg_cpu_load += cpu / 100.
