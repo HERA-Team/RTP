@@ -30,6 +30,7 @@ logger = True  # This is just here because the jedi syntax checker is dumb.
 MAXFAIL = 5  # Jon : move this into config
 TIME_INT_FOR_NEW_TM_CHECK = 90
 TIME_INT_FOR_NEW_MC_CHECK = 300
+BALANCE_CPU_LOAD = False
 
 
 def file2jd(zenuv):
@@ -671,9 +672,14 @@ class Scheduler(ThreadingMixIn, HTTPServer):
                 still = self.tm_cycle.next().hostname  # Balance out all the nodes on startup
             else:
                 # Get a still for a new obsid if one doesn't already exist.
-                still = self.obs_to_still(obsnum)
-                if still is False:
-                    return None
+                if BALANCE_CPU_LOAD:
+                    # assign task to still with lowest load
+                    still = self.obs_to_still(obsnum)
+                    if still is False:
+                        return None
+                else:
+                    # cycle through available hosts, as on start up above
+                    still = self.tm_cycle.next().hostname
 
             # Assign the still to the obsid
             self.dbi.set_obs_still_host(obsnum, still)
